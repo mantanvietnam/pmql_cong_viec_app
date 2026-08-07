@@ -1,0 +1,28 @@
+# Mobile Feature Mapping
+
+| Chuc nang web | File web lien quan | API lien quan | Man hinh mobile | Trang thai trien khai |
+| ------------- | ------------------ | ------------- | --------------- | --------------------- |
+| Dang nhap | `/Users/root1/GitHub/pmql_cong_viec/app/login/page.tsx` | `POST /apis/login` + mobile fields `type_device`, `token_device`; session dung `token_mobile` gui lai bang field `token` | `src/screens/auth/LoginScreen.tsx`, `src/context/AuthContext.tsx`, `src/services/deviceMessaging.ts`, `src/api/client.ts`, `src/api/authApi.ts` | Da kiem tra |
+| Quen mat khau | `/Users/root1/GitHub/pmql_cong_viec/app/forgot-password/page.tsx` | `POST /apis/request_forgot_password_otp`, `POST /apis/forgot_password` | `src/screens/auth/ForgotPasswordScreen.tsx` | Da trien khai |
+| Dang xuat | `/Users/root1/GitHub/pmql_cong_viec/app/logout/page.tsx`, `/Users/root1/GitHub/pmql_cong_viec/components/Sidebar.tsx` | `POST /apis/logout` | `src/screens/profile/ProfileScreen.tsx` | Da trien khai |
+| Doi mat khau | `/Users/root1/GitHub/pmql_cong_viec/app/change-password/page.tsx` | `POST /apis/change_password` | `src/screens/profile/ProfileScreen.tsx` | Da trien khai |
+| Ho so ca nhan | `/Users/root1/GitHub/pmql_cong_viec/app/cai-dat/page.tsx` | `POST /apis/update_info_user`, `POST /apis/getTelegramLink` | `src/screens/profile/ProfileScreen.tsx` | Dang trien khai |
+| Danh sach to chuc | `/Users/root1/GitHub/pmql_cong_viec/app/to-chuc/page.tsx` | `POST /apis/get_organizations` | `src/screens/organizations/OrganizationsScreen.tsx` | Da trien khai |
+| Them/sua/xoa to chuc | `/Users/root1/GitHub/pmql_cong_viec/app/to-chuc/page.tsx` | `POST /apis/add_organization`, `POST /apis/edit_organization`, `POST /apis/delete_organization` | `src/screens/organizations/OrganizationsScreen.tsx` | Da trien khai |
+| Chi tiet to chuc | `/Users/root1/GitHub/pmql_cong_viec/app/to-chuc/[id]/page.tsx` | `POST /apis/get_organization`, `POST /apis/get_role_permission` | Chua co man hinh rieng | Bi chan - can them UI tab mobile |
+| Phong ban trong to chuc | `/Users/root1/GitHub/pmql_cong_viec/app/to-chuc/[id]/tabs/PhongBanTab.tsx` | `POST /apis/get_departments`, `POST /apis/add_department`, `POST /apis/edit_department`, `POST /apis/delete_department` | Chua co man hinh rieng | Bi chan - chua chuyen het tab con |
+| Nhan su to chuc/phong ban/du an | `/Users/root1/GitHub/pmql_cong_viec/app/to-chuc/[id]/tabs/NhanSuTab.tsx` | `POST /apis/get_organization_members`, `POST /apis/get_department_members`, `POST /apis/get_project_members`, add/delete member APIs | TaskForm member picker mot phan | Dang trien khai |
+| Vai tro va phan quyen | `/Users/root1/GitHub/pmql_cong_viec/app/to-chuc/[id]/tabs/VaiTroTab.tsx` | `POST /apis/get_roles`, `POST /apis/get_permissions`, role CRUD APIs | Chua co man hinh mobile | Bi chan - can UI quan tri role rieng |
+| Danh sach du an | `/Users/root1/GitHub/pmql_cong_viec/app/du-an/page.tsx`, `/Users/root1/GitHub/pmql_cong_viec/app/to-chuc/[id]/tabs/DuAnTab.tsx` | `POST /apis/get_projects` | `src/screens/projects/ProjectsScreen.tsx` | Da trien khai |
+| Them/sua/xoa du an | `/Users/root1/GitHub/pmql_cong_viec/app/du-an/page.tsx` | `POST /apis/add_project`, `POST /apis/edit_project`, `POST /apis/delete_project` | `src/screens/projects/ProjectsScreen.tsx` | Da trien khai |
+| Chi tiet du an | `/Users/root1/GitHub/pmql_cong_viec/app/du-an/[id]/page.tsx` | `POST /apis/get_project`, members/tasks APIs | Chua co man hinh rieng | Bi chan - can UI detail mobile |
+| Danh sach cong viec | `/Users/root1/GitHub/pmql_cong_viec/app/cong-viec/page.tsx`, `/Users/root1/GitHub/pmql_cong_viec/app/to-chuc/[id]/tabs/CongViecTab.tsx` | `POST /apis/get_tasks` | `src/screens/tasks/TasksScreen.tsx` | Da trien khai |
+| Them/sua cong viec | `/Users/root1/GitHub/pmql_cong_viec/app/cong-viec/page.tsx` | `POST multipart /apis/add_task`, `POST multipart /apis/edit_task` | `src/screens/tasks/TaskFormScreen.tsx` | Da trien khai |
+| Xoa cong viec | `/Users/root1/GitHub/pmql_cong_viec/app/cong-viec/page.tsx` | `POST /apis/delete_task` | `src/screens/tasks/TasksScreen.tsx` | Da trien khai |
+| Chi tiet cong viec | `/Users/root1/GitHub/pmql_cong_viec/app/cong-viec/[id]/page.tsx` | `POST /apis/get_task` | `src/screens/tasks/TaskDetailScreen.tsx` | Da trien khai |
+| Bao cao tien do cong viec | `/Users/root1/GitHub/pmql_cong_viec/app/cong-viec/[id]/page.tsx` | `POST /apis/get_task_logs`, `POST multipart /apis/add_task_log`, `POST /apis/delete_task_log` | `src/screens/tasks/TaskDetailScreen.tsx`, `src/screens/tasks/TaskReportScreen.tsx` | Da trien khai |
+| File dinh kem task/log | `/Users/root1/GitHub/pmql_cong_viec/app/cong-viec/page.tsx`, `/Users/root1/GitHub/pmql_cong_viec/app/cong-viec/[id]/page.tsx` | multipart `files[]`, JSON `link_file`, JSON `image` | `src/screens/tasks/TaskFormScreen.tsx`, `src/screens/tasks/TaskDetailScreen.tsx` | Da trien khai |
+| Bao cao ca nhan | `/Users/root1/GitHub/pmql_cong_viec/app/bao-cao/page.tsx`, `/Users/root1/GitHub/pmql_cong_viec/app/bao-cao/bao-cao-tien-do/page.tsx` | `POST /apis/personalDashboardAPI` | `src/screens/reports/ReportsScreen.tsx` | Da trien khai |
+| Bao cao to chuc | `/Users/root1/GitHub/pmql_cong_viec/app/bao-cao/to-chuc/[id]/page.tsx` | `POST /apis/managerDashboardAPI` | Chua co man hinh mobile | Bi chan - can dieu huong tu chi tiet to chuc |
+| Bao cao phong ban | `/Users/root1/GitHub/pmql_cong_viec/app/bao-cao/phong-ban/[id]/page.tsx` | `POST /apis/DepartmentDashboardAPI` | Chua co man hinh mobile | Bi chan - can dieu huong tu chi tiet phong ban |
+| Landing page/marketing | `/Users/root1/GitHub/pmql_cong_viec/app/page.tsx` | Khong | Khong trien khai | Da kiem tra - bo qua theo yeu cau |
