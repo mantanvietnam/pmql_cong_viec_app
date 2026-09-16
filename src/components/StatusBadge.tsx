@@ -2,14 +2,14 @@ import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
 
 const taskMap: Record<number, {label: string; bg: string; fg: string}> = {
-  1: {label: 'Moi tao', bg: '#dbeafe', fg: '#1d4ed8'},
-  2: {label: 'Dang xu ly', bg: '#ffedd5', fg: '#c2410c'},
-  3: {label: 'Hoan thanh', bg: '#d1fae5', fg: '#047857'},
-  4: {label: 'Huy bo', bg: '#e5e7eb', fg: '#4b5563'},
+  1: {label: 'Mới tạo', bg: '#dbeafe', fg: '#1d4ed8'},
+  2: {label: 'Đang xử lý', bg: '#ffedd5', fg: '#c2410c'},
+  3: {label: 'Hoàn thành', bg: '#d1fae5', fg: '#047857'},
+  4: {label: 'Hủy bỏ', bg: '#e5e7eb', fg: '#4b5563'},
 };
 
 export function StatusBadge({status}: {status?: number}) {
-  const item = taskMap[Number(status)] || {label: 'Khong ro', bg: '#f3f4f6', fg: '#4b5563'};
+  const item = taskMap[Number(status)] || {label: 'Không rõ', bg: '#f3f4f6', fg: '#4b5563'};
   return (
     <View style={[styles.badge, {backgroundColor: item.bg}]}>
       <Text style={[styles.text, {color: item.fg}]}>{item.label}</Text>

@@ -1,4 +1,4 @@
-package com.pmqlcongviecapp
+package net.quanlynhansu.app
 
 import android.app.Application
 import com.facebook.react.PackageList

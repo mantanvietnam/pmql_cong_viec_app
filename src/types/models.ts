@@ -1,7 +1,7 @@
 export interface UserSession {
   id?: number;
   user_id?: number;
-  token: string;
+  token?: string;
   token_mobile?: string;
   token_device?: string;
   type_device?: 'mobile' | string;
@@ -23,6 +23,26 @@ export interface User {
   avatar?: string;
   role_id?: number | null;
   total_tasks?: number;
+}
+
+export interface Membership extends User {
+  join_id: number;
+  role_name?: string;
+}
+
+export interface Permission {
+  id: number;
+  name: string;
+  code: string;
+  description?: string;
+}
+
+export interface Role {
+  id: number;
+  name: string;
+  description?: string;
+  member_count?: number;
+  permissions?: Permission[];
 }
 
 export interface Organization {
@@ -81,8 +101,8 @@ export interface Task {
   department_id?: number | null;
   organization_id?: number | null;
   status: number;
-  start_date?: number | null;
-  end_date?: number | null;
+  start_date?: number | string | null;
+  end_date?: number | string | null;
   link_file?: string | null;
   image?: string | null;
   Users?: User | User[];
@@ -111,3 +131,62 @@ export interface PersonalDashboard {
   total_upcoming: number;
   recent_tasks: Task[];
 }
+
+export interface ManagerDashboardSummary {
+  total_departments: number;
+  total_projects: number;
+  total_tasks: number;
+  total_members: number;
+  total_completed_tasks: number;
+  total_in_progress_tasks: number;
+  total_overdue_tasks: number;
+}
+
+export interface DepartmentDashboardSummary {
+  total: number;
+  not_started: number;
+  in_progress: number;
+  completed: number;
+  canceled?: number;
+  overdue: number;
+}
+
+export interface DepartmentStat {
+  id: number;
+  name: string;
+  total_projects: number;
+  total_tasks: number;
+  completed_tasks: number;
+  in_progress_tasks: number;
+  not_started_tasks: number;
+  canceled_tasks: number;
+  overdue_tasks: number;
+}
+
+export interface ProjectStat extends Project {
+  not_started_tasks?: number;
+  in_progress_tasks?: number;
+  completed_tasks?: number;
+  overdue_tasks?: number;
+}
+
+export interface ManagerDashboard {
+  organization: Pick<Organization, 'id' | 'name' | 'description'>;
+  summary: ManagerDashboardSummary;
+  departments: DepartmentStat[];
+  tasks?: Task[];
+  task_assignees?: Record<number, User[]>;
+}
+
+export interface DepartmentDashboard {
+  department: Department;
+  summary: DepartmentDashboardSummary;
+  projects?: ProjectStat[];
+  tasks?: Task[];
+  task_assignees?: Record<number, User[]>;
+}
+
+export type MemberScope =
+  | {type: 'organization'; organizationId: number}
+  | {type: 'department'; organizationId: number; departmentId: number}
+  | {type: 'project'; organizationId?: number; projectId: number};

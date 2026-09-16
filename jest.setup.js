@@ -12,9 +12,10 @@ jest.mock('react-native-keychain', () => ({
   resetGenericPassword: jest.fn(() => Promise.resolve(true)),
 }));
 
-jest.mock('react-native-document-picker', () => ({
+jest.mock('@react-native-documents/picker', () => ({
   pick: jest.fn(),
-  isCancel: jest.fn(() => false),
+  isErrorWithCode: jest.fn(() => false),
+  errorCodes: {OPERATION_CANCELED: 'OPERATION_CANCELED'},
 }));
 
 jest.mock('react-native-image-picker', () => ({

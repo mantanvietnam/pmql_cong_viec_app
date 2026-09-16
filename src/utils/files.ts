@@ -28,7 +28,7 @@ export const parseAttachments = (raw?: unknown): AttachedFile[] => {
     return [
       {
         file_url: text,
-        file_name: text.split('/').pop() || 'Tai lieu',
+        file_name: text.split('/').pop() || 'Tài liệu',
         file_type: isImageFile({file_url: text}) ? 'image' : 'document',
       },
     ];
@@ -46,16 +46,16 @@ export const validateAttachment = (
   currentCount: number,
 ) => {
   if (currentCount >= MAX_ATTACHMENT_COUNT) {
-    return `Toi da ${MAX_ATTACHMENT_COUNT} file dinh kem.`;
+    return `Tối đa ${MAX_ATTACHMENT_COUNT} file đính kèm.`;
   }
   const size = file.size || file.fileSize || 0;
   if (size > MAX_ATTACHMENT_SIZE) {
-    return 'File vuot qua gioi han 10MB.';
+    return 'File vượt quá giới hạn 10MB.';
   }
   const name = file.name || file.fileName || '';
   const ext = name.split('.').pop()?.toLowerCase();
   if (!ext || !ALLOWED_ATTACHMENT_EXTENSIONS.includes(ext)) {
-    return 'Dinh dang file khong duoc ho tro.';
+    return 'Định dạng file không được hỗ trợ.';
   }
   return null;
 };

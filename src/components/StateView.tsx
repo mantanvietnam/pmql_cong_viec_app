@@ -4,7 +4,7 @@ import {Inbox} from 'lucide-react-native';
 import {colors} from '../theme/colors';
 import {AppButton} from './AppButton';
 
-export function LoadingView({label = 'Dang tai du lieu...'}: {label?: string}) {
+export function LoadingView({label = 'Đang tải dữ liệu...'}: {label?: string}) {
   return (
     <View style={styles.container}>
       <ActivityIndicator color={colors.primary} size="large" />
@@ -28,9 +28,9 @@ export function EmptyState({title, message}: {title: string; message?: string}) 
 export function ErrorState({message, onRetry}: {message: string; onRetry?: () => void}) {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Khong the tai du lieu</Text>
+      <Text style={styles.title}>Không thể tải dữ liệu</Text>
       <Text style={styles.text}>{message}</Text>
-      {onRetry ? <AppButton title="Thu lai" onPress={onRetry} variant="secondary" /> : null}
+      {onRetry ? <AppButton title="Thử lại" onPress={onRetry} variant="secondary" /> : null}
     </View>
   );
 }

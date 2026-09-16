@@ -21,10 +21,19 @@ export const getFirebaseDeviceToken = async () => {
       await registerDeviceForRemoteMessages(messaging);
     }
 
-    return await getToken(messaging);
+    const token = await getToken(messaging);
+
+    if (__DEV__) {
+      console.info('Trạng thái Firebase device token:', {
+        platform: Platform.OS,
+        available: token.length > 0,
+      });
+    }
+
+    return token;
   } catch (error) {
     if (__DEV__) {
-      console.warn('Khong lay duoc Firebase device token:', error);
+      console.warn('Không lấy được Firebase device token:', error);
     }
     return '';
   }

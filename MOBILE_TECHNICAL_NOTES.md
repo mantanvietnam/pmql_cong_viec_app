@@ -57,14 +57,17 @@ Website khong chua Prisma, database schema, route handler Next.js hoac server ac
 | `/apis/edit_organization` | POST | `organization_id`, `name`, `description` | `code 200` | `app/to-chuc/page.tsx` |
 | `/apis/delete_organization` | POST | `organization_id` | `code 200` | `app/to-chuc/page.tsx` |
 | `/apis/get_organization` | POST | `organization_id` | detail + counts | `app/to-chuc/[id]/page.tsx` |
+| `/apis/get_role_permission` | POST | `organization_id` | `Permission[]` của người hiện tại | `app/to-chuc/[id]/page.tsx`, các trang chi tiết |
 | `/apis/get_departments` | POST | `organization_id`, `limit`, `page` | `data.listData` | `tabs/PhongBanTab.tsx` |
 | `/apis/add_department` | POST | `organization_id`, `name`, `description` | `code 201` | `tabs/PhongBanTab.tsx` |
 | `/apis/edit_department` | POST | `department_id`, `name`, `description` | `code 200` | `tabs/PhongBanTab.tsx` |
 | `/apis/delete_department` | POST | `department_id` | `code 200` | `tabs/PhongBanTab.tsx` |
+| `/apis/get_department` | POST | `department_id` | chi tiết + counts | `app/phong-ban/[id]/page.tsx` |
 | `/apis/get_projects` | POST | optional `organization_id`, `department_id` | `data: Project[]` | `app/du-an/page.tsx` |
 | `/apis/add_project` | POST | project fields | `code 201/200` | `app/du-an/page.tsx` |
 | `/apis/edit_project` | POST | `project_id`, project fields | `code 200` | `app/du-an/page.tsx` |
 | `/apis/delete_project` | POST | `project_id` | `code 200` | `app/du-an/page.tsx` |
+| `/apis/get_project` | POST | `project_id` | chi tiết + counts | `app/du-an/[id]/page.tsx` |
 | `/apis/get_tasks` | POST | `limit`, `page`, filters | `data.listData` | `app/cong-viec/page.tsx` |
 | `/apis/add_task` | POST multipart | task fields, `user_ids[]`, `files[]` | `code 201/200` | `app/cong-viec/page.tsx` |
 | `/apis/edit_task` | POST multipart | `id`, task fields | `code 200` | `app/cong-viec/page.tsx` |
@@ -77,8 +80,16 @@ Website khong chua Prisma, database schema, route handler Next.js hoac server ac
 | `/apis/get_organization_members` | POST | `organization_id` | `data.listData` | `tabs/NhanSuTab.tsx` |
 | `/apis/get_department_members` | POST | `department_id` | `data.listData` | `tabs/NhanSuTab.tsx` |
 | `/apis/get_project_members` | POST | `project_id` | `data.listData` | `tabs/NhanSuTab.tsx` |
+| `/apis/get_users` | POST | `keyword`, `status`, optional `organization_id` | `data.listData` | `tabs/NhanSuTab.tsx` |
+| `/apis/add_organization_member` | POST | `organization_id`, `user_id[]`, optional `role_id` | `code` | `tabs/NhanSuTab.tsx` |
+| `/apis/edit_organization_member` | POST | `organization_id`, `user_id`, `role_id` | `code` | `tabs/NhanSuTab.tsx` |
+| `/apis/delete_organization_member` | POST | membership `id` | `code` | `tabs/NhanSuTab.tsx` |
+| `/apis/add_department_member`, `/apis/delete_department_member` | POST | `department_id`, `user_id[]` / membership `id` | `code` | `tabs/NhanSuTab.tsx` |
+| `/apis/add_project_member`, `/apis/delete_project_member` | POST | `project_id`, `user_id[]` / membership `id` | `code` | `tabs/NhanSuTab.tsx` |
 | `/apis/get_roles` | POST | `organization_id` | `data.listData` | `tabs/VaiTroTab.tsx` |
 | `/apis/get_permissions` | POST | none | `data.listData` | `tabs/VaiTroTab.tsx` |
+| `/apis/add_role`, `/apis/edit_role` | POST | `name`, `description`, `organization_id`, `permissions[]`, edit có `id` | `code` | `tabs/VaiTroTab.tsx` |
+| `/apis/delete_role` | POST | role `id` | `code` | `tabs/VaiTroTab.tsx` |
 | `/apis/personalDashboardAPI` | POST | `user_id`, optional dates/org | dashboard | `app/bao-cao/page.tsx` |
 | `/apis/managerDashboardAPI` | POST | `organization_id` | manager dashboard | `app/bao-cao/to-chuc/[id]/page.tsx` |
 | `/apis/DepartmentDashboardAPI` | POST | `department_id` | department dashboard | `app/bao-cao/phong-ban/[id]/page.tsx` |
@@ -130,25 +141,29 @@ Website khong chua Prisma, database schema, route handler Next.js hoac server ac
 
 ## 11. Cau truc man hinh mobile
 
-- Auth: Login, ForgotPassword.
+- Auth: Login, Register, ForgotPassword.
 - Main tabs: Cong viec, To chuc, Du an, Bao cao, Ho so.
-- Stack nghiep vu: TaskDetail, TaskForm, TaskReport.
+- Stack nghiep vu: TaskDetail, TaskForm, TaskReport, OrganizationDetail, DepartmentDetail, ProjectDetail, ManagementReport, MemberReport.
 
 ## 12. Anh xa chuc nang web sang mobile
 
 - `/login` -> LoginScreen.
 - `/forgot-password` -> ForgotPasswordScreen.
+- `/register` -> RegisterScreen; đăng ký xong gọi lại login mobile để có `token_mobile` và `token_device`.
 - `/cong-viec` -> TasksScreen + TaskFormScreen.
 - `/cong-viec/[id]` -> TaskDetailScreen + TaskReportScreen.
-- `/to-chuc` -> OrganizationsScreen.
-- `/du-an` -> ProjectsScreen.
-- `/bao-cao` -> ReportsScreen.
+- `/to-chuc` và `/to-chuc/[id]` -> OrganizationsScreen + OrganizationDetailScreen và các tab phòng ban/vai trò/nhân sự/dự án/công việc.
+- `/phong-ban/[id]` -> DepartmentDetailScreen.
+- `/du-an` và `/du-an/[id]` -> ProjectsScreen + ProjectDetailScreen.
+- `/bao-cao` và các báo cáo tổ chức/phòng ban/thành viên -> ReportsScreen + PersonalReportView + ManagementReportScreen + MemberReportScreen.
 - `/cai-dat` + `/change-password` + `/logout` -> ProfileScreen.
 
 ## 13. Rui ro va van de can luu y
 
-- RN CLI latest sinh RN 0.86.2 yeu cau Node >=22.11 hoac >=20.19.4 tuy package, may hien tai la Node 20.18.1 nen build/lint co the bi canh bao hoac loi moi truong.
+- RN CLI 0.86.2 yêu cầu Node >=22.11; máy hiện dùng Node 22.21.1, đáp ứng yêu cầu.
 - `API_BASE_URL` can duoc cau hinh trong `src/constants/config.ts` hoac co che env build; khong ghi hard-code rai rac trong source.
-- Chua thay `google-services.json` va `GoogleService-Info.plist` trong repo. Firebase Messaging chi lay duoc `token_device` tren thiet bi that/simulator khi native Firebase da duoc cau hinh dung.
+- `android/app/google-services.json` và `ios/GoogleService-Info.plist` hợp lệ, khớp package/bundle ID `net.quanlynhansu.app` và cùng Firebase project. Android Emulator đã lấy được FCM device token. iOS đã khởi tạo Firebase, xin quyền thông báo và build Simulator thành công, nhưng React Native Firebase không đăng ký APNs trên ARM64 Simulator nên cần kiểm tra token lần cuối trên iPhone thật với Push Notifications provisioning và APNs credential đã cấu hình trong Firebase Console.
+- iOS dùng CocoaPods cho Firebase (`$RNFirebaseDisableSPM = true`, `use_modular_headers!`) để tương thích static linkage; `pod install` đã hoàn tất.
 - Khong co refresh token/current-user endpoint nen session restore chua the verify truoc khi goi API dau tien.
-- Cac chuc nang vai tro/nhan su/phong ban chi moi duoc phan tich va chua day du UI mobile trong vong trien khai dau tien.
+- Đã đối chiếu 52/52 endpoint REST của web trong lớp API mobile. Hai route `app/home` và `app/dashboard` là mockup tĩnh không gọi API, nên không chuyển thành màn hình mobile.
+- Website không có API refresh token/current-user và không có API danh sách/đánh dấu đã đọc notification. App không tạo dữ liệu giả cho hai phần này.

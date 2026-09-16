@@ -30,7 +30,7 @@ export function LoginScreen({navigation}: Props) {
     try {
       await signIn(phone.trim(), password);
     } catch (err) {
-      Alert.alert('Dang nhap that bai', (err as Error).message || 'Vui long thu lai.');
+      Alert.alert('Đăng nhập thất bại', (err as Error).message || 'Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -42,30 +42,31 @@ export function LoginScreen({navigation}: Props) {
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <Image source={require('../../../logo.png')} style={styles.logo} resizeMode="contain" />
           <Text style={styles.brand}>{APP_NAME}</Text>
-          <Text style={styles.title}>Dang Nhap</Text>
-          <Text style={styles.subtitle}>He thong quan ly cong viec</Text>
+          <Text style={styles.title}>Đăng nhập</Text>
+          <Text style={styles.subtitle}>Hệ thống quản lý công việc</Text>
 
           <View style={styles.form}>
             <AppTextInput
-              label="So dien thoai"
+              label="Số điện thoại"
               value={phone}
               onChangeText={setPhone}
               keyboardType="phone-pad"
               autoCapitalize="none"
-              placeholder="Nhap so dien thoai"
+              placeholder="Nhập số điện thoại"
               error={error && !phone.trim() ? error : undefined}
             />
             <AppTextInput
-              label="Mat khau"
+              label="Mật khẩu"
               value={password}
               onChangeText={setPassword}
               secureTextEntry
-              placeholder="Nhap mat khau"
+              placeholder="Nhập mật khẩu"
               error={error && !password.trim() ? error : undefined}
             />
             {error ? <Text style={styles.error}>{error}</Text> : null}
-            <AppButton title="Dang nhap" onPress={submit} loading={loading} />
-            <AppButton title="Quen mat khau?" variant="ghost" onPress={() => navigation.navigate('ForgotPassword')} />
+            <AppButton title="Đăng nhập" onPress={submit} loading={loading} />
+            <AppButton title="Quên mật khẩu?" variant="ghost" onPress={() => navigation.navigate('ForgotPassword')} />
+            <AppButton title="Tạo tài khoản" variant="secondary" onPress={() => navigation.navigate('Register')} />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

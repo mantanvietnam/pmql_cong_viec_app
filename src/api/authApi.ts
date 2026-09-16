@@ -52,6 +52,13 @@ export const authApi = {
     }).catch(() => undefined);
   },
 
+  async lockUser(token: string) {
+    return apiRequest('/apis/lockUser', {
+      body: {access_token: token},
+      headers: {Authorization: `Bearer ${token}`},
+    });
+  },
+
   async changePassword(payload: {
     access_token: string;
     old_password: string;

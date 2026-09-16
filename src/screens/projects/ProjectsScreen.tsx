@@ -1,23 +1,38 @@
-import React, {useCallback, useEffect, useState} from 'react';
-import {Alert, FlatList, Modal, Pressable, StyleSheet, Text, View} from 'react-native';
-import {Edit3, Trash2} from 'lucide-react-native';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import {Alert, FlatList, Pressable, StyleSheet, Text, View} from 'react-native';
+import {Search} from 'lucide-react-native';
+import {useNavigation} from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {workApi} from '../../api/workApi';
-import {AppButton} from '../../components/AppButton';
+import {CardActions} from '../../components/CardActions';
 import {AppHeader} from '../../components/AppHeader';
+import {AddIconButton} from '../../components/AddIconButton';
 import {AppTextInput} from '../../components/AppTextInput';
 import {confirm} from '../../components/Confirm';
+import {ProjectEditorModal} from '../../components/ProjectEditorModal';
 import {EmptyState, ErrorState, LoadingView} from '../../components/StateView';
-import {PROJECT_STATUSES} from '../../constants/business';
 import {colors} from '../../theme/colors';
 import {Project} from '../../types/models';
 import {formatDateTime} from '../../utils/date';
+import {AppStackParamList} from '../../navigation/types';
+import {PROJECT_STATUSES} from '../../constants/business';
+import {useAuth} from '../../context/AuthContext';
 
 export function ProjectsScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
+  const {session} = useAuth();
   const [items, setItems] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [modal, setModal] = useState<{open: boolean; item?: Project}>({open: false});
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState<number>();
+  const permissions = session?.permissions || ['project_add', 'project_edit', 'project_delete'];
+  const filtered = useMemo(() => {
+    const keyword = search.trim().toLocaleLowerCase('vi');
+    return items.filter(item => (!keyword || item.name.toLocaleLowerCase('vi').includes(keyword)) && (status === undefined || item.status === status));
+  }, [items, search, status]);
 
   const load = useCallback(async () => {
     setError('');
@@ -37,112 +52,68 @@ export function ProjectsScreen() {
   }, [load]);
 
   const remove = (item: Project) => {
-    confirm('Xoa du an', `Xoa "${item.name}" va co the ca cong viec ben trong?`, async () => {
+    confirm('Xóa dự án', `Xóa "${item.name}" và có thể cả công việc bên trong?`, async () => {
       try {
         await workApi.deleteProject(item.id);
         load();
       } catch (err) {
-        Alert.alert('Khong the xoa', (err as Error).message);
+        Alert.alert('Không thể xóa', (err as Error).message);
       }
     });
   };
 
-  if (loading && items.length === 0) return <LoadingView label="Dang tai du an..." />;
+  if (loading && items.length === 0) return <LoadingView label="Đang tải dự án..." />;
   if (error && items.length === 0) return <ErrorState message={error} onRetry={load} />;
 
   return (
     <View style={styles.screen}>
-      <AppHeader title="Du an" subtitle="Theo doi trang thai va deadline" right={<AppButton title="Them" onPress={() => setModal({open: true})} style={styles.addButton} />} />
+      <AppHeader title="Dự án" subtitle="Theo dõi trạng thái và hạn chót" right={permissions.includes('project_add') ? <AddIconButton onPress={() => setModal({open: true})} /> : undefined} />
+      <View style={styles.filters}>
+        <View style={styles.searchRow}><Search size={20} color={colors.muted} /><AppTextInput value={search} onChangeText={setSearch} placeholder="Tìm tên dự án" style={styles.searchInput} /></View>
+        <FlatList horizontal data={[{value: undefined, label: 'Tất cả'}, ...PROJECT_STATUSES]} keyExtractor={item => String(item.value ?? 'all')} showsHorizontalScrollIndicator={false} renderItem={({item}) => <Pressable style={[styles.chip, status === item.value && styles.chipActive]} onPress={() => setStatus(item.value)}><Text style={[styles.chipText, status === item.value && styles.chipTextActive]}>{item.label}</Text></Pressable>} />
+      </View>
       <FlatList
         contentContainerStyle={styles.list}
-        data={items}
+        data={filtered}
         keyExtractor={item => String(item.id)}
         refreshing={refreshing}
         onRefresh={() => {
           setRefreshing(true);
           load();
         }}
-        ListEmptyComponent={<EmptyState title="Chua co du an" />}
+        ListEmptyComponent={<EmptyState title="Chưa có dự án" />}
         renderItem={({item}) => (
-          <View style={styles.card}>
-            <View style={styles.cardTop}>
-              <Text style={styles.title}>{item.name}</Text>
-              <View style={styles.actions}>
-                <Pressable onPress={() => setModal({open: true, item})}><Edit3 color={colors.primary} size={18} /></Pressable>
-                <Pressable onPress={() => remove(item)}><Trash2 color={colors.danger} size={18} /></Pressable>
-              </View>
-            </View>
-            <Text style={styles.desc} numberOfLines={2}>{item.description || 'Chua co mo ta'}</Text>
-            <Text style={styles.meta}>Bat dau: {formatDateTime(item.start_date as number)} • Han: {formatDateTime(item.end_date as number)}</Text>
-            <Text style={styles.meta}>{item.task_count || 0} cong viec • {item.member_count || 0} nhan su</Text>
-          </View>
+          <Pressable style={styles.card} onPress={() => navigation.navigate('ProjectDetail', {projectId: item.id})}>
+            <Text style={styles.title}>{item.name}</Text>
+            <Text style={styles.desc} numberOfLines={2}>{item.description || 'Chưa có mô tả'}</Text>
+            <Text style={styles.status}>{PROJECT_STATUSES.find(value => value.value === item.status)?.label || 'Chưa rõ trạng thái'}</Text>
+            <Text style={styles.meta}>Bắt đầu: {formatDateTime(item.start_date)} • Hạn: {formatDateTime(item.end_date)}</Text>
+            <Text style={styles.meta}>{item.task_count || 0} công việc • {item.member_count || 0} nhân sự</Text>
+            <CardActions
+              onEdit={permissions.includes('project_edit') ? () => setModal({open: true, item}) : undefined}
+              onDelete={permissions.includes('project_delete') ? () => remove(item) : undefined}
+            />
+          </Pressable>
         )}
       />
-      <ProjectModal state={modal} onClose={() => setModal({open: false})} onSaved={load} />
+      <ProjectEditorModal visible={modal.open} project={modal.item} onClose={() => setModal({open: false})} onSaved={load} />
     </View>
-  );
-}
-
-function ProjectModal({state, onClose, onSaved}: {state: {open: boolean; item?: Project}; onClose: () => void; onSaved: () => void}) {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [status, setStatus] = useState(0);
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    setName(state.item?.name || '');
-    setDescription(state.item?.description || '');
-    setStatus(state.item?.status || 0);
-  }, [state.item, state.open]);
-
-  const save = async () => {
-    if (!name.trim()) return Alert.alert('Thieu thong tin', 'Vui long nhap ten du an.');
-    setSaving(true);
-    try {
-      await workApi.saveProject({project_id: state.item?.id, name: name.trim(), description, status});
-      onClose();
-      onSaved();
-    } catch (err) {
-      Alert.alert('Khong the luu', (err as Error).message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Modal visible={state.open} animationType="slide" transparent>
-      <View style={styles.modalBackdrop}>
-        <View style={styles.modal}>
-          <Text style={styles.modalTitle}>{state.item ? 'Sua du an' : 'Them du an'}</Text>
-          <AppTextInput label="Ten du an" value={name} onChangeText={setName} />
-          <AppTextInput label="Mo ta" value={description} onChangeText={setDescription} multiline style={styles.textarea} />
-          <View style={styles.wrap}>
-            {PROJECT_STATUSES.map(item => (
-              <AppButton key={item.value} title={item.label} variant={status === item.value ? 'primary' : 'secondary'} onPress={() => setStatus(item.value)} style={styles.statusButton} />
-            ))}
-          </View>
-          <AppButton title="Luu" onPress={save} loading={saving} />
-          <AppButton title="Huy" variant="ghost" onPress={onClose} />
-        </View>
-      </View>
-    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
   screen: {flex: 1, backgroundColor: colors.background},
-  addButton: {minHeight: 40, paddingHorizontal: 12},
+  filters: {padding: 16, paddingBottom: 4, gap: 10},
+  searchRow: {flexDirection: 'row', alignItems: 'center', gap: 8},
+  searchInput: {flex: 1},
+  chip: {minHeight: 40, paddingHorizontal: 13, justifyContent: 'center', marginRight: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface},
+  chipActive: {backgroundColor: colors.primary, borderColor: colors.primary},
+  chipText: {fontSize: 13, color: colors.muted, fontWeight: '800'},
+  chipTextActive: {color: '#fff'},
   list: {padding: 16, gap: 12},
   card: {backgroundColor: colors.surface, borderRadius: 14, padding: 16, gap: 10, borderWidth: 1, borderColor: colors.border},
-  cardTop: {flexDirection: 'row', justifyContent: 'space-between', gap: 12},
-  title: {flex: 1, fontSize: 16, fontWeight: '900', color: colors.text},
+  title: {fontSize: 16, fontWeight: '900', color: colors.text},
   desc: {fontSize: 13, color: colors.muted},
+  status: {fontSize: 12, color: colors.primary, fontWeight: '900'},
   meta: {fontSize: 12, color: colors.muted, fontWeight: '700'},
-  actions: {flexDirection: 'row', gap: 14},
-  modalBackdrop: {flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.35)'},
-  modal: {backgroundColor: colors.surface, padding: 20, borderTopLeftRadius: 20, borderTopRightRadius: 20, gap: 14},
-  modalTitle: {fontSize: 20, fontWeight: '900', color: colors.text},
-  textarea: {height: 96, paddingTop: 12},
-  wrap: {flexDirection: 'row', flexWrap: 'wrap', gap: 8},
-  statusButton: {minHeight: 42},
 });

@@ -38,7 +38,7 @@ export async function apiRequest<T>(
   options: RequestOptions = {},
 ): Promise<ApiResponse<T>> {
   if (!API_BASE_URL || API_BASE_URL.includes('your-backend')) {
-    throw createApiError('Chua cau hinh API_BASE_URL cho backend.');
+    throw createApiError('Chưa cấu hình API_BASE_URL cho backend.');
   }
 
   const session = options.skipAuth ? null : await sessionStorage.get();
@@ -83,7 +83,7 @@ export async function apiRequest<T>(
     if (response.status === 401 || json.code === 203) {
       onUnauthorized?.();
       throw createApiError(
-        json.message || 'Phien dang nhap het han.',
+        json.message || 'Phiên đăng nhập hết hạn.',
         json.code,
         response.status,
       );
@@ -92,7 +92,7 @@ export async function apiRequest<T>(
     return json;
   } catch (error) {
     if ((error as Error).name === 'AbortError') {
-      throw createApiError('Ket noi qua thoi gian cho.');
+      throw createApiError('Kết nối quá thời gian chờ.');
     }
     throw error;
   } finally {
@@ -102,7 +102,7 @@ export async function apiRequest<T>(
 
 export const expectSuccess = <T>(response: ApiResponse<T>, codes = [200, 201, 0]) => {
   if (!codes.includes(response.code)) {
-    throw createApiError(response.message || 'May chu tra ve loi.', response.code);
+    throw createApiError(response.message || 'Máy chủ trả về lỗi.', response.code);
   }
   return response.data as T;
 };

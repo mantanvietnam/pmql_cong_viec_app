@@ -1,17 +1,22 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {Alert, FlatList, Modal, Pressable, StyleSheet, Text, View} from 'react-native';
-import {Edit3, Trash2} from 'lucide-react-native';
+import {useNavigation} from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {workApi} from '../../api/workApi';
 import {AppButton} from '../../components/AppButton';
+import {CardActions} from '../../components/CardActions';
 import {AppHeader} from '../../components/AppHeader';
+import {AddIconButton} from '../../components/AddIconButton';
 import {AppTextInput} from '../../components/AppTextInput';
 import {confirm} from '../../components/Confirm';
 import {EmptyState, ErrorState, LoadingView} from '../../components/StateView';
 import {colors} from '../../theme/colors';
 import {Organization} from '../../types/models';
 import {initials} from '../../utils/text';
+import {AppStackParamList} from '../../navigation/types';
 
 export function OrganizationsScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const [items, setItems] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -37,24 +42,24 @@ export function OrganizationsScreen() {
   }, [load]);
 
   const remove = (item: Organization) => {
-    confirm('Xoa to chuc', `Xoa "${item.name}"?`, async () => {
+    confirm('Xóa tổ chức', `Xóa "${item.name}"?`, async () => {
       try {
         await workApi.deleteOrganization(item.id);
         load();
       } catch (err) {
-        Alert.alert('Khong the xoa', (err as Error).message);
+        Alert.alert('Không thể xóa', (err as Error).message);
       }
     });
   };
 
-  if (loading && items.length === 0) return <LoadingView label="Dang tai to chuc..." />;
+  if (loading && items.length === 0) return <LoadingView label="Đang tải tổ chức..." />;
   if (error && items.length === 0) return <ErrorState message={error} onRetry={load} />;
 
   return (
     <View style={styles.screen}>
-      <AppHeader title="To chuc" subtitle="Phong ban, du an va nhan su" right={<AppButton title="Them" onPress={() => setModal({open: true})} style={styles.addButton} />} />
+      <AppHeader title="Tổ chức" subtitle="Phòng ban, dự án và nhân sự" right={<AddIconButton onPress={() => setModal({open: true})} />} />
       <View style={styles.filters}>
-        <AppTextInput value={search} onChangeText={setSearch} onSubmitEditing={load} placeholder="Tim kiem to chuc..." />
+        <AppTextInput value={search} onChangeText={setSearch} onSubmitEditing={load} placeholder="Tìm kiếm tổ chức..." />
       </View>
       <FlatList
         contentContainerStyle={styles.list}
@@ -65,20 +70,19 @@ export function OrganizationsScreen() {
           setRefreshing(true);
           load();
         }}
-        ListEmptyComponent={<EmptyState title="Chua co to chuc" />}
+        ListEmptyComponent={<EmptyState title="Chưa có tổ chức" />}
         renderItem={({item}) => (
-          <View style={styles.card}>
-            <View style={styles.avatar}><Text style={styles.avatarText}>{initials(item.name)}</Text></View>
-            <View style={styles.cardBody}>
-              <Text style={styles.title}>{item.name}</Text>
-              <Text style={styles.desc} numberOfLines={2}>{item.description || 'Chua co mo ta'}</Text>
-              <Text style={styles.meta}>{item.department_count || 0} phong ban • {item.project_count || 0} du an • {item.task_count || 0} cong viec</Text>
+          <Pressable style={styles.card} onPress={() => navigation.navigate('OrganizationDetail', {organizationId: item.id})}>
+            <View style={styles.cardMain}>
+              <View style={styles.avatar}><Text style={styles.avatarText}>{initials(item.name)}</Text></View>
+              <View style={styles.cardBody}>
+                <Text style={styles.title}>{item.name}</Text>
+                <Text style={styles.desc} numberOfLines={2}>{item.description || 'Chưa có mô tả'}</Text>
+                <Text style={styles.meta}>{item.department_count || 0} phòng ban • {item.project_count || 0} dự án • {item.task_count || 0} công việc</Text>
+              </View>
             </View>
-            <View style={styles.actions}>
-              <Pressable onPress={() => setModal({open: true, item})}><Edit3 color={colors.primary} size={18} /></Pressable>
-              <Pressable onPress={() => remove(item)}><Trash2 color={colors.danger} size={18} /></Pressable>
-            </View>
-          </View>
+            <CardActions onEdit={() => setModal({open: true, item})} onDelete={() => remove(item)} />
+          </Pressable>
         )}
       />
       <OrganizationModal state={modal} onClose={() => setModal({open: false})} onSaved={load} />
@@ -97,14 +101,14 @@ function OrganizationModal({state, onClose, onSaved}: {state: {open: boolean; it
   }, [state.item, state.open]);
 
   const save = async () => {
-    if (!name.trim()) return Alert.alert('Thieu thong tin', 'Vui long nhap ten to chuc.');
+    if (!name.trim()) return Alert.alert('Thiếu thông tin', 'Vui lòng nhập tên tổ chức.');
     setSaving(true);
     try {
       await workApi.saveOrganization({organization_id: state.item?.id, name: name.trim(), description});
       onClose();
       onSaved();
     } catch (err) {
-      Alert.alert('Khong the luu', (err as Error).message);
+      Alert.alert('Không thể lưu', (err as Error).message);
     } finally {
       setSaving(false);
     }
@@ -114,11 +118,11 @@ function OrganizationModal({state, onClose, onSaved}: {state: {open: boolean; it
     <Modal visible={state.open} animationType="slide" transparent>
       <View style={styles.modalBackdrop}>
         <View style={styles.modal}>
-          <Text style={styles.modalTitle}>{state.item ? 'Sua to chuc' : 'Them to chuc'}</Text>
-          <AppTextInput label="Ten to chuc" value={name} onChangeText={setName} />
-          <AppTextInput label="Mo ta" value={description} onChangeText={setDescription} multiline style={styles.textarea} />
-          <AppButton title="Luu" onPress={save} loading={saving} />
-          <AppButton title="Huy" variant="ghost" onPress={onClose} />
+          <Text style={styles.modalTitle}>{state.item ? 'Sửa tổ chức' : 'Thêm tổ chức'}</Text>
+          <AppTextInput label="Tên tổ chức" value={name} onChangeText={setName} />
+          <AppTextInput label="Mô tả" value={description} onChangeText={setDescription} multiline style={styles.textarea} />
+          <AppButton title="Lưu" onPress={save} loading={saving} />
+          <AppButton title="Hủy" variant="ghost" onPress={onClose} />
         </View>
       </View>
     </Modal>
@@ -127,17 +131,16 @@ function OrganizationModal({state, onClose, onSaved}: {state: {open: boolean; it
 
 const styles = StyleSheet.create({
   screen: {flex: 1, backgroundColor: colors.background},
-  addButton: {minHeight: 40, paddingHorizontal: 12},
   filters: {padding: 16},
   list: {padding: 16, paddingTop: 0, gap: 12},
-  card: {backgroundColor: colors.surface, borderRadius: 14, padding: 14, flexDirection: 'row', gap: 12, borderWidth: 1, borderColor: colors.border},
+  card: {backgroundColor: colors.surface, borderRadius: 14, padding: 14, gap: 10, borderWidth: 1, borderColor: colors.border},
+  cardMain: {flexDirection: 'row', alignItems: 'flex-start', gap: 12},
   avatar: {width: 44, height: 44, borderRadius: 14, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center'},
   avatarText: {color: '#fff', fontSize: 18, fontWeight: '900'},
   cardBody: {flex: 1, gap: 5},
   title: {fontSize: 16, fontWeight: '900', color: colors.text},
   desc: {fontSize: 13, color: colors.muted},
   meta: {fontSize: 12, color: colors.primary, fontWeight: '800'},
-  actions: {gap: 14, justifyContent: 'center'},
   modalBackdrop: {flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.35)'},
   modal: {backgroundColor: colors.surface, padding: 20, borderTopLeftRadius: 20, borderTopRightRadius: 20, gap: 14},
   modalTitle: {fontSize: 20, fontWeight: '900', color: colors.text},

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "527528817511",
+    "project_id": "fodo-436af",
+    "storage_bucket": "fodo-436af.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:527528817511:android:47ae6ad4430305a2f735c2",
+        "android_client_info": {
+          "package_name": "net.quanlynhansu.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAytQ7Wp1ZscF8ZHOblnChYEuUwIfIRqtE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

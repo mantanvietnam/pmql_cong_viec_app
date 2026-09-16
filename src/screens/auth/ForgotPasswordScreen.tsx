@@ -18,14 +18,14 @@ export function ForgotPasswordScreen({navigation}: Props) {
   const [loading, setLoading] = useState(false);
 
   const requestOtp = async () => {
-    if (!phone.trim()) return Alert.alert('Thieu thong tin', 'Vui long nhap so dien thoai.');
+    if (!phone.trim()) return Alert.alert('Thiếu thông tin', 'Vui lòng nhập số điện thoại.');
     setLoading(true);
     try {
       await authApi.requestForgotPasswordOtp(phone.trim());
       setStep(2);
-      Alert.alert('Da gui OTP', 'Vui long kiem tra email hoac tin nhan.');
+      Alert.alert('Đã gửi OTP', 'Vui lòng kiểm tra email hoặc tin nhắn.');
     } catch (err) {
-      Alert.alert('Khong the gui OTP', (err as Error).message);
+      Alert.alert('Không thể gửi OTP', (err as Error).message);
     } finally {
       setLoading(false);
     }
@@ -33,16 +33,16 @@ export function ForgotPasswordScreen({navigation}: Props) {
 
   const resetPassword = async () => {
     if (!otp.trim() || !password.trim()) {
-      return Alert.alert('Thieu thong tin', 'Vui long nhap OTP va mat khau moi.');
+      return Alert.alert('Thiếu thông tin', 'Vui lòng nhập OTP và mật khẩu mới.');
     }
     setLoading(true);
     try {
       await authApi.resetPassword(phone.trim(), otp.trim(), password);
-      Alert.alert('Thanh cong', 'Mat khau da duoc cap nhat.', [
-        {text: 'Dang nhap', onPress: () => navigation.goBack()},
+      Alert.alert('Thành công', 'Mật khẩu đã được cập nhật.', [
+        {text: 'Đăng nhập', onPress: () => navigation.goBack()},
       ]);
     } catch (err) {
-      Alert.alert('Doi mat khau that bai', (err as Error).message);
+      Alert.alert('Đổi mật khẩu thất bại', (err as Error).message);
     } finally {
       setLoading(false);
     }
@@ -52,24 +52,24 @@ export function ForgotPasswordScreen({navigation}: Props) {
     <Screen>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <Text style={styles.title}>{step === 1 ? 'Khoi phuc mat khau' : 'Tao mat khau moi'}</Text>
+          <Text style={styles.title}>{step === 1 ? 'Khôi phục mật khẩu' : 'Tạo mật khẩu mới'}</Text>
           <Text style={styles.subtitle}>
-            {step === 1 ? 'Nhap so dien thoai de nhan ma xac nhan' : `Nhap ma OTP da gui den ${phone}`}
+            {step === 1 ? 'Nhập số điện thoại để nhận mã xác nhận' : `Nhập mã OTP đã gửi đến ${phone}`}
           </Text>
           <View style={styles.form}>
             {step === 1 ? (
               <>
-                <AppTextInput label="So dien thoai" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
-                <AppButton title="Gui ma xac nhan" onPress={requestOtp} loading={loading} />
+                <AppTextInput label="Số điện thoại" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+                <AppButton title="Gửi mã xác nhận" onPress={requestOtp} loading={loading} />
               </>
             ) : (
               <>
-                <AppTextInput label="Ma OTP" value={otp} onChangeText={setOtp} keyboardType="number-pad" />
-                <AppTextInput label="Mat khau moi" value={password} onChangeText={setPassword} secureTextEntry />
-                <AppButton title="Xac nhan doi mat khau" onPress={resetPassword} loading={loading} />
+                <AppTextInput label="Mã OTP" value={otp} onChangeText={setOtp} keyboardType="number-pad" />
+                <AppTextInput label="Mật khẩu mới" value={password} onChangeText={setPassword} secureTextEntry />
+                <AppButton title="Xác nhận đổi mật khẩu" onPress={resetPassword} loading={loading} />
               </>
             )}
-            <AppButton title="Quay lai" variant="ghost" onPress={() => (step === 2 ? setStep(1) : navigation.goBack())} />
+            <AppButton title="Quay lại" variant="ghost" onPress={() => (step === 2 ? setStep(1) : navigation.goBack())} />
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

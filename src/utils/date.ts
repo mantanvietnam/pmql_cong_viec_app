@@ -9,14 +9,26 @@ export const toApiDateTime = (date: Date | null) => {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
 
+export const toApiDate = (date: Date | null) => {
+  if (!date) return null;
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export const fromUnixSeconds = (timestamp?: number | string | null) => {
   if (!timestamp) return null;
-  return new Date(Number(timestamp) * 1000);
+  if (typeof timestamp === 'number' || /^\d+$/.test(timestamp)) {
+    return new Date(Number(timestamp) * 1000);
+  }
+  const date = new Date(timestamp.replace(' ', 'T'));
+  return Number.isNaN(date.getTime()) ? null : date;
 };
 
 export const formatDateTime = (timestamp?: number | string | null) => {
   const date = fromUnixSeconds(timestamp);
-  if (!date) return 'Chua cap nhat';
+  if (!date) return 'Chưa cập nhật';
   return date.toLocaleString('vi-VN', {
     day: '2-digit',
     month: '2-digit',
@@ -26,13 +38,16 @@ export const formatDateTime = (timestamp?: number | string | null) => {
   });
 };
 
-export const isOverdue = (timestamp?: number | null, status?: number) => {
+export const isOverdue = (timestamp?: number | string | null, status?: number) => {
   if (!timestamp || status === 3 || status === 4) return false;
-  return timestamp < Math.floor(Date.now() / 1000);
+  const date = fromUnixSeconds(timestamp);
+  return Boolean(date && date.getTime() < Date.now());
 };
 
-export const isNearDeadline = (timestamp?: number | null) => {
+export const isNearDeadline = (timestamp?: number | string | null) => {
   if (!timestamp) return false;
-  const diff = timestamp - Math.floor(Date.now() / 1000);
-  return diff >= 0 && diff <= 86400;
+  const date = fromUnixSeconds(timestamp);
+  if (!date) return false;
+  const diff = date.getTime() - Date.now();
+  return diff >= 0 && diff <= 86400000;
 };
