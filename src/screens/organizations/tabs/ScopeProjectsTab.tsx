@@ -11,13 +11,14 @@ import {Project} from '../../../types/models';
 import {formatDateTime} from '../../../utils/date';
 import {PROJECT_STATUSES} from '../../../constants/business';
 
-export function ScopeProjectsTab({organizationId, departmentId, permissions, onOpen, onChanged, onRegisterAddAction}: {
+export function ScopeProjectsTab({organizationId, departmentId, permissions, onOpen, onChanged, onRegisterAddAction, listHeader}: {
   organizationId: number;
   departmentId?: number;
   permissions: string[];
   onOpen: (project: Project) => void;
   onChanged?: () => void;
   onRegisterAddAction?: (action?: () => void) => void;
+  listHeader?: React.ReactElement;
 }) {
   const [items, setItems] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,12 +52,11 @@ export function ScopeProjectsTab({organizationId, departmentId, permissions, onO
   const remove = (project: Project) => confirm('Xóa dự án', `Xóa "${project.name}" và dữ liệu liên quan?`, async () => {
     try { await workApi.deleteProject(project.id); await load(); onChanged?.(); } catch (err) { Alert.alert('Không thể xóa', (err as Error).message); }
   });
-  if (loading && items.length === 0) return <LoadingView label="Đang tải dự án..." />;
-  if (error && items.length === 0) return <ErrorState message={error} onRetry={load} />;
+  if (loading && items.length === 0) return <ListState header={listHeader} content={<LoadingView label="Đang tải dự án..." />} />;
+  if (error && items.length === 0) return <ListState header={listHeader} content={<ErrorState message={error} onRetry={load} />} />;
   return (
     <View style={styles.container}>
-      <FlatList style={styles.filterList} horizontal data={[{value: undefined, label: 'Tất cả'}, ...PROJECT_STATUSES]} keyExtractor={item => String(item.value ?? 'all')} contentContainerStyle={styles.filters} showsHorizontalScrollIndicator={false} renderItem={({item}) => <Pressable style={[styles.chip, status === item.value && styles.chipActive]} onPress={() => setStatus(item.value)}><Text style={[styles.chipText, status === item.value && styles.chipTextActive]}>{item.label}</Text></Pressable>} />
-      <FlatList data={filtered} keyExtractor={item => String(item.id)} contentContainerStyle={styles.list} ListEmptyComponent={<EmptyState title="Chưa có dự án" />} renderItem={({item}) => (
+      <FlatList data={filtered} keyExtractor={item => String(item.id)} contentContainerStyle={styles.list} ListHeaderComponent={<>{listHeader}<FlatList style={styles.filterList} horizontal data={[{value: undefined, label: 'Tất cả'}, ...PROJECT_STATUSES]} keyExtractor={item => String(item.value ?? 'all')} contentContainerStyle={styles.filters} showsHorizontalScrollIndicator={false} renderItem={({item}) => <Pressable style={[styles.chip, status === item.value && styles.chipActive]} onPress={() => setStatus(item.value)}><Text style={[styles.chipText, status === item.value && styles.chipTextActive]}>{item.label}</Text></Pressable>} /></>} ListHeaderComponentStyle={styles.listHeader} ListEmptyComponent={<EmptyState title="Chưa có dự án" />} renderItem={({item}) => (
         <Pressable style={styles.card} onPress={() => onOpen(item)}>
           <View style={styles.cardMain}>
             <View style={styles.body}>
@@ -78,8 +78,12 @@ export function ScopeProjectsTab({organizationId, departmentId, permissions, onO
   );
 }
 
+function ListState({header, content}: {header?: React.ReactElement; content: React.ReactElement}) {
+  return <FlatList data={[]} renderItem={null} contentContainerStyle={styles.list} ListHeaderComponent={header} ListHeaderComponentStyle={styles.listHeader} ListEmptyComponent={content} />;
+}
+
 const styles = StyleSheet.create({
-  container: {flex: 1}, filterList: {height: 54, flexGrow: 0}, filters: {paddingHorizontal: 16, paddingVertical: 8}, chip: {minHeight: 38, justifyContent: 'center', paddingHorizontal: 12, marginRight: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface}, chipActive: {backgroundColor: colors.primary, borderColor: colors.primary}, chipText: {fontSize: 12, color: colors.muted, fontWeight: '800'}, chipTextActive: {color: '#fff'}, list: {padding: 16, gap: 10, flexGrow: 1},
+  container: {flex: 1}, listHeader: {marginHorizontal: -16, marginTop: -16}, filterList: {height: 54, flexGrow: 0}, filters: {paddingHorizontal: 16, paddingVertical: 8}, chip: {minHeight: 38, justifyContent: 'center', paddingHorizontal: 12, marginRight: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface}, chipActive: {backgroundColor: colors.primary, borderColor: colors.primary}, chipText: {fontSize: 12, color: colors.muted, fontWeight: '800'}, chipTextActive: {color: '#fff'}, list: {padding: 16, gap: 10, flexGrow: 1},
   card: {backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 8, padding: 14, gap: 10},
   cardMain: {flexDirection: 'row', alignItems: 'center', gap: 12},
   body: {flex: 1, gap: 5}, name: {fontSize: 16, fontWeight: '900', color: colors.text}, description: {fontSize: 13, color: colors.muted}, meta: {fontSize: 12, color: colors.muted, fontWeight: '700'},

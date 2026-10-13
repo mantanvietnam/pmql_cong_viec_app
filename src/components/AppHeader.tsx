@@ -1,20 +1,24 @@
 import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import {colors} from '../theme/colors';
 
 export function AppHeader({title, subtitle, right}: {title: string; subtitle?: string; right?: React.ReactNode}) {
   return (
-    <View style={styles.container}>
-      <View style={styles.textBox}>
-        <Text style={styles.title}>{title}</Text>
-        {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+    <SafeAreaView edges={['top']} style={styles.safeArea}>
+      <View style={styles.container}>
+        <View style={styles.textBox}>
+          <Text style={styles.title}>{title}</Text>
+          {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+        </View>
+        {right}
       </View>
-      {right}
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {backgroundColor: colors.surface},
   container: {
     paddingHorizontal: 20,
     paddingVertical: 16,

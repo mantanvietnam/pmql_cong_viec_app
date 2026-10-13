@@ -11,7 +11,7 @@ import {Task} from '../../../types/models';
 import {formatDateTime} from '../../../utils/date';
 import {TASK_STATUSES} from '../../../constants/business';
 
-export function ScopeTasksTab({organizationId, departmentId, projectId, permissions, assignee, onClearAssignee, onOpen, onEdit}: {
+export function ScopeTasksTab({organizationId, departmentId, projectId, permissions, assignee, onClearAssignee, onOpen, onEdit, listHeader}: {
   organizationId?: number;
   departmentId?: number;
   projectId?: number;
@@ -20,6 +20,7 @@ export function ScopeTasksTab({organizationId, departmentId, projectId, permissi
   onClearAssignee?: () => void;
   onOpen: (task: Task) => void;
   onEdit: (task: Task) => void;
+  listHeader?: React.ReactElement;
 }) {
   const [items, setItems] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,11 +38,11 @@ export function ScopeTasksTab({organizationId, departmentId, projectId, permissi
   const remove = (task: Task) => confirm('Xóa công việc', `Xóa "${task.name}"?`, async () => {
     try { await workApi.deleteTask(task.id); load(); } catch (err) { Alert.alert('Không thể xóa', (err as Error).message); }
   });
-  if (loading && items.length === 0) return <LoadingView label="Đang tải công việc..." />;
-  if (error && items.length === 0) return <ErrorState message={error} onRetry={load} />;
+  if (loading && items.length === 0) return <ListState header={listHeader} content={<LoadingView label="Đang tải công việc..." />} />;
+  if (error && items.length === 0) return <ListState header={listHeader} content={<ErrorState message={error} onRetry={load} />} />;
   return (
     <View style={styles.container}>
-      {assignee ? (
+      <FlatList data={filtered} keyExtractor={item => String(item.id)} contentContainerStyle={styles.list} ListHeaderComponent={<>{listHeader}{assignee ? (
         <View style={styles.toolbar}>
           <View style={styles.assigneeFilter}>
             <UserRound size={17} color={colors.primary} />
@@ -53,9 +54,7 @@ export function ScopeTasksTab({organizationId, departmentId, projectId, permissi
             ) : null}
           </View>
         </View>
-      ) : null}
-      <FlatList style={styles.filterList} horizontal data={[{value: undefined, label: 'Tất cả'}, ...TASK_STATUSES]} keyExtractor={item => String(item.value ?? 'all')} contentContainerStyle={styles.filters} showsHorizontalScrollIndicator={false} renderItem={({item}) => <Pressable style={[styles.chip, status === item.value && styles.chipActive]} onPress={() => setStatus(item.value)}><Text style={[styles.chipText, status === item.value && styles.chipTextActive]}>{item.label}</Text></Pressable>} />
-      <FlatList data={filtered} keyExtractor={item => String(item.id)} contentContainerStyle={styles.list} ListEmptyComponent={<EmptyState title={assignee ? `${assignee.name} chưa có công việc` : 'Chưa có công việc'} />} renderItem={({item}) => (
+      ) : null}<FlatList style={styles.filterList} horizontal data={[{value: undefined, label: 'Tất cả'}, ...TASK_STATUSES]} keyExtractor={item => String(item.value ?? 'all')} contentContainerStyle={styles.filters} showsHorizontalScrollIndicator={false} renderItem={({item}) => <Pressable style={[styles.chip, status === item.value && styles.chipActive]} onPress={() => setStatus(item.value)}><Text style={[styles.chipText, status === item.value && styles.chipTextActive]}>{item.label}</Text></Pressable>} /></>} ListHeaderComponentStyle={styles.listHeader} ListEmptyComponent={<EmptyState title={assignee ? `${assignee.name} chưa có công việc` : 'Chưa có công việc'} />} renderItem={({item}) => (
         <Pressable style={styles.card} onPress={() => onOpen(item)}>
           <View style={styles.top}><StatusBadge status={item.status} /></View>
           <Text style={styles.name}>{item.name}</Text>
@@ -70,4 +69,8 @@ export function ScopeTasksTab({organizationId, departmentId, projectId, permissi
   );
 }
 
-const styles = StyleSheet.create({container: {flex: 1}, toolbar: {paddingHorizontal: 16, paddingTop: 10}, assigneeFilter: {minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 12, borderWidth: 1, borderColor: '#bfdbfe', borderRadius: 8, backgroundColor: '#eff6ff'}, assigneeText: {flex: 1, fontSize: 13, color: colors.primary, fontWeight: '800'}, filterList: {height: 54, flexGrow: 0}, filters: {paddingHorizontal: 16, paddingVertical: 8}, chip: {minHeight: 38, justifyContent: 'center', paddingHorizontal: 12, marginRight: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface}, chipActive: {backgroundColor: colors.primary, borderColor: colors.primary}, chipText: {fontSize: 12, color: colors.muted, fontWeight: '800'}, chipTextActive: {color: '#fff'}, list: {padding: 16, gap: 10, flexGrow: 1}, card: {padding: 14, gap: 9, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 8}, top: {flexDirection: 'row', alignItems: 'center'}, name: {fontSize: 15, fontWeight: '900', color: colors.text}, meta: {fontSize: 12, color: colors.muted, fontWeight: '700'}});
+function ListState({header, content}: {header?: React.ReactElement; content: React.ReactElement}) {
+  return <FlatList data={[]} renderItem={null} contentContainerStyle={styles.list} ListHeaderComponent={header} ListHeaderComponentStyle={styles.listHeader} ListEmptyComponent={content} />;
+}
+
+const styles = StyleSheet.create({container: {flex: 1}, listHeader: {marginHorizontal: -16, marginTop: -16}, toolbar: {paddingHorizontal: 16, paddingTop: 10}, assigneeFilter: {minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 12, borderWidth: 1, borderColor: '#bfdbfe', borderRadius: 8, backgroundColor: '#eff6ff'}, assigneeText: {flex: 1, fontSize: 13, color: colors.primary, fontWeight: '800'}, filterList: {height: 54, flexGrow: 0}, filters: {paddingHorizontal: 16, paddingVertical: 8}, chip: {minHeight: 38, justifyContent: 'center', paddingHorizontal: 12, marginRight: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface}, chipActive: {backgroundColor: colors.primary, borderColor: colors.primary}, chipText: {fontSize: 12, color: colors.muted, fontWeight: '800'}, chipTextActive: {color: '#fff'}, list: {padding: 16, gap: 10, flexGrow: 1}, card: {padding: 14, gap: 9, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 8}, top: {flexDirection: 'row', alignItems: 'center'}, name: {fontSize: 15, fontWeight: '900', color: colors.text}, meta: {fontSize: 12, color: colors.muted, fontWeight: '700'}});

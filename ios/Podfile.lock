@@ -2489,7 +2489,7 @@ SPEC CHECKSUMS:
   FirebaseMessaging: 313d69fe6529c8846813d1660b65d7d38bc16954
   GoogleDataTransport: a24e58982ab3ba2f64d79613e027fe7f57e88539
   GoogleUtilities: 4e0c2ad9fa0d0d18b5c4df8bf57b461cba35b0bb
-  hermes-engine: 33bb448e26f8f3c55575603b77f3495967d7fd52
+  hermes-engine: 813fd209e93d77d49b385b03272f41a9deebdeaa
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   PromisesObjC: 752c3227f599e3467650e47ea36f433eeb10c273
   RCTDeprecation: bccb6545c26db881ecddfd83a3f9ea82aba1605f

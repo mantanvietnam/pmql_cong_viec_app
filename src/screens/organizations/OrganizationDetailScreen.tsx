@@ -59,7 +59,7 @@ export function OrganizationDetailScreen({navigation, route}: Props) {
   }, [canAdd, navigation, organizationId, tab]);
   if (loading && !organization) return <LoadingView label="Đang tải tổ chức..." />;
   if (error && !organization) return <ErrorState message={error} onRetry={load} />;
-  if (!organization) return null;
+  if (!organization) return <ErrorState message="Không tìm thấy tổ chức." onRetry={load} />;
   const tabs = [
     {value: 'departments' as const, label: 'Phòng ban', count: organization.department_count || 0},
     {value: 'roles' as const, label: 'Vai trò', count: organization.role_count || 0},
@@ -76,17 +76,19 @@ export function OrganizationDetailScreen({navigation, route}: Props) {
     setTaskAssignee({id: member.id, name: member.fullname});
     setTab('tasks');
   };
-  return <View style={styles.screen}>
+  const listHeader = <View>
     <View style={styles.hero}>
       <View style={styles.identity}><View style={styles.avatar}><Text style={styles.avatarText}>{organization.name.charAt(0).toUpperCase()}</Text></View><View style={styles.heroText}><Text style={styles.title}>{organization.name}</Text><Text style={styles.description}>{organization.description || 'Chưa có mô tả'}</Text></View><Pressable accessibilityRole="button" accessibilityLabel="Xem báo cáo tổ chức" style={styles.reportIcon} onPress={() => navigation.navigate('ManagementReport', {scope: 'organization', id: organizationId})}><BarChart3 size={23} color={colors.primary} /></Pressable></View>
     </View>
     <SegmentedTabs items={tabs} value={tab} onChange={changeTab} />
+  </View>;
+  return <View style={styles.screen}>
     <View style={styles.content}>
-      {tab === 'departments' ? <DepartmentsTab organizationId={organizationId} permissions={permissions} onOpen={item => navigation.navigate('DepartmentDetail', {departmentId: item.id})} onChanged={load} onRegisterAddAction={registerAddAction} /> : null}
-      {tab === 'roles' ? <RolesTab organizationId={organizationId} permissions={permissions} onChanged={load} onRegisterAddAction={registerAddAction} /> : null}
-      {tab === 'members' ? <MembersTab scope={{type: 'organization', organizationId}} permissions={permissions} onChanged={load} onOpenTasks={openMemberTasks} onRegisterAddAction={registerAddAction} /> : null}
-      {tab === 'projects' ? <ScopeProjectsTab organizationId={organizationId} permissions={permissions} onOpen={item => navigation.navigate('ProjectDetail', {projectId: item.id})} onChanged={load} onRegisterAddAction={registerAddAction} /> : null}
-      {tab === 'tasks' ? <ScopeTasksTab organizationId={organizationId} permissions={permissions} assignee={taskAssignee} onClearAssignee={() => setTaskAssignee(undefined)} onOpen={item => navigation.navigate('TaskDetail', {taskId: item.id})} onEdit={item => navigation.navigate('TaskForm', {task: item, taskId: item.id})} /> : null}
+      {tab === 'departments' ? <DepartmentsTab listHeader={listHeader} organizationId={organizationId} permissions={permissions} onOpen={item => navigation.navigate('DepartmentDetail', {departmentId: item.id})} onChanged={load} onRegisterAddAction={registerAddAction} /> : null}
+      {tab === 'roles' ? <RolesTab listHeader={listHeader} organizationId={organizationId} permissions={permissions} onChanged={load} onRegisterAddAction={registerAddAction} /> : null}
+      {tab === 'members' ? <MembersTab listHeader={listHeader} scope={{type: 'organization', organizationId}} permissions={permissions} onChanged={load} onOpenTasks={openMemberTasks} onRegisterAddAction={registerAddAction} /> : null}
+      {tab === 'projects' ? <ScopeProjectsTab listHeader={listHeader} organizationId={organizationId} permissions={permissions} onOpen={item => navigation.navigate('ProjectDetail', {projectId: item.id})} onChanged={load} onRegisterAddAction={registerAddAction} /> : null}
+      {tab === 'tasks' ? <ScopeTasksTab listHeader={listHeader} organizationId={organizationId} permissions={permissions} assignee={taskAssignee} onClearAssignee={() => setTaskAssignee(undefined)} onOpen={item => navigation.navigate('TaskDetail', {taskId: item.id})} onEdit={item => navigation.navigate('TaskForm', {task: item, taskId: item.id})} /> : null}
     </View>
   </View>;
 }

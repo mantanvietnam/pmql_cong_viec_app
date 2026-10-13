@@ -18,7 +18,7 @@ export type AppStackParamList = {
   MainTabs: undefined;
   TaskDetail: {taskId: number};
   TaskForm: {task?: Task; taskId?: number; defaultOrganizationId?: number; defaultDepartmentId?: number; defaultProjectId?: number} | undefined;
-  TaskReport: {taskId: number; currentStatus: number; log?: TaskLog};
+  TaskReport: {taskId: number; currentStatus?: number; log?: TaskLog};
   OrganizationDetail: {organizationId: number};
   DepartmentDetail: {departmentId: number};
   ProjectDetail: {projectId: number};

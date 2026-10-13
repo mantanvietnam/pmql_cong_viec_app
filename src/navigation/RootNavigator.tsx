@@ -1,5 +1,9 @@
-import React from 'react';
-import {NavigationContainer} from '@react-navigation/native';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
+import {
+  NavigationContainer,
+  StackActions,
+  useNavigationContainerRef,
+} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {
@@ -28,6 +32,11 @@ import {DepartmentDetailScreen} from '../screens/organizations/DepartmentDetailS
 import {ProjectDetailScreen} from '../screens/projects/ProjectDetailScreen';
 import {ManagementReportScreen} from '../screens/reports/ManagementReportScreen';
 import {MemberReportScreen} from '../screens/reports/MemberReportScreen';
+import {
+  getTaskDetailIdFromNotification,
+  subscribeToOpenedNotifications,
+} from '../services/deviceMessaging';
+import type {OpenedNotification} from '../services/deviceMessaging';
 import {colors} from '../theme/colors';
 import {AppStackParamList, AppTabParamList, AuthStackParamList} from './types';
 
@@ -96,11 +105,62 @@ function Splash() {
 
 export function RootNavigator() {
   const {session, isBooting} = useAuth();
+  const navigationRef = useNavigationContainerRef<AppStackParamList>();
+  const handledNotificationIds = useRef(new Set<string>());
+  const [isNavigationReady, setIsNavigationReady] = useState(false);
+  const [pendingTaskId, setPendingTaskId] = useState<number | null>(null);
+
+  const queueNotification = useCallback(
+    (notification: OpenedNotification) => {
+      const taskId = getTaskDetailIdFromNotification(notification);
+      if (!taskId) return;
+
+      const notificationId =
+        notification.messageId ||
+        (notification.sentTime ? `${taskId}:${notification.sentTime}` : '');
+      if (notificationId && handledNotificationIds.current.has(notificationId)) return;
+      if (notificationId) handledNotificationIds.current.add(notificationId);
+
+      setPendingTaskId(taskId);
+    },
+    [],
+  );
+
+  useEffect(
+    () => subscribeToOpenedNotifications(queueNotification),
+    [queueNotification],
+  );
+
+  useEffect(() => {
+    if (
+      pendingTaskId === null ||
+      isBooting ||
+      !getSessionAccessToken(session) ||
+      !isNavigationReady
+    ) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      if (!navigationRef.isReady()) return;
+      navigationRef.dispatch(
+        StackActions.push('TaskDetail', {taskId: pendingTaskId}),
+      );
+      setPendingTaskId(current =>
+        current === pendingTaskId ? null : current,
+      );
+    }, 0);
+
+    return () => clearTimeout(timeout);
+  }, [isBooting, isNavigationReady, navigationRef, pendingTaskId, session]);
 
   if (isBooting) return <Splash />;
 
   return (
-    <NavigationContainer linking={{prefixes: ['fodo://'], config: {screens: {TaskDetail: {path: 'tasks/:taskId', parse: {taskId: Number}}}}}}>
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={() => setIsNavigationReady(true)}
+      linking={{prefixes: ['fodo://'], config: {screens: {TaskDetail: {path: 'tasks/:taskId', parse: {taskId: Number}}}}}}>
       {getSessionAccessToken(session) ? <AppNavigator /> : <AuthNavigator />}
     </NavigationContainer>
   );

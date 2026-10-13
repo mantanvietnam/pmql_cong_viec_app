@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useMemo, useState} from 'react';
 import {Alert, FlatList, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {errorCodes, isErrorWithCode, pick} from '@react-native-documents/picker';
 import {launchImageLibrary} from 'react-native-image-picker';
@@ -46,6 +46,10 @@ export function TaskFormScreen({navigation, route}: Props) {
   const [saving, setSaving] = useState(false);
   const [memberSearch, setMemberSearch] = useState('');
   const {permissions} = useOrganizationPermissions(organizationId);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({title: editingId ? 'Sửa công việc' : 'Tạo công việc'});
+  }, [editingId, navigation]);
 
   useEffect(() => {
     workApi.getOrganizations('').then(setOrganizations).catch(() => undefined);
@@ -196,8 +200,10 @@ export function TaskFormScreen({navigation, route}: Props) {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-      <AppTextInput label="Tiêu đề" value={name} onChangeText={setName} placeholder="Nhập tên công việc" />
+    <View style={styles.screen}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        <View style={styles.content}>
+          <AppTextInput label="Tiêu đề" value={name} onChangeText={setName} placeholder="Nhập tên công việc" />
       <AppTextInput
         label="Mô tả"
         value={description}
@@ -267,8 +273,10 @@ export function TaskFormScreen({navigation, route}: Props) {
         </View>
       ))}
 
-      <AppButton title={editingId ? 'Cập nhật công việc' : 'Tạo công việc'} onPress={submit} loading={saving} />
-    </ScrollView>
+          <AppButton title={editingId ? 'Cập nhật công việc' : 'Tạo công việc'} onPress={submit} loading={saving} />
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -281,7 +289,10 @@ function Chip({label, active, onPress}: {label: string; active: boolean; onPress
 }
 
 const styles = StyleSheet.create({
-  content: {padding: 16, gap: 14, backgroundColor: colors.background, flexGrow: 1},
+  screen: {flex: 1, backgroundColor: colors.background},
+  scroll: {flex: 1},
+  scrollContent: {backgroundColor: colors.background, flexGrow: 1},
+  content: {padding: 16, gap: 14, flexGrow: 1},
   textarea: {height: 130, paddingTop: 12},
   label: {fontSize: 13, fontWeight: '900', color: colors.text},
   wrap: {flexDirection: 'row', flexWrap: 'wrap', gap: 8},

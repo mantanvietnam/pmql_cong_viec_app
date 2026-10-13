@@ -29,6 +29,8 @@ jest.mock('@react-native-firebase/messaging', () => {
     requestPermission: jest.fn(() => Promise.resolve(1)),
     registerDeviceForRemoteMessages: jest.fn(() => Promise.resolve()),
     getToken: jest.fn(() => Promise.resolve('test-fcm-token')),
+    getInitialNotification: jest.fn(() => Promise.resolve(null)),
+    onNotificationOpenedApp: jest.fn(() => jest.fn()),
   };
 });
 

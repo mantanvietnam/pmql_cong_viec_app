@@ -16,12 +16,14 @@ export function DepartmentsTab({
   onOpen,
   onChanged,
   onRegisterAddAction,
+  listHeader,
 }: {
   organizationId: number;
   permissions: string[];
   onOpen: (department: Department) => void;
   onChanged?: () => void;
   onRegisterAddAction?: (action?: () => void) => void;
+  listHeader?: React.ReactElement;
 }) {
   const [items, setItems] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,8 +66,8 @@ export function DepartmentsTab({
     }
   });
 
-  if (loading && items.length === 0) return <LoadingView label="Đang tải phòng ban..." />;
-  if (error && items.length === 0) return <ErrorState message={error} onRetry={load} />;
+  if (loading && items.length === 0) return <ListState header={listHeader} content={<LoadingView label="Đang tải phòng ban..." />} />;
+  if (error && items.length === 0) return <ListState header={listHeader} content={<ErrorState message={error} onRetry={load} />} />;
 
   return (
     <View style={styles.container}>
@@ -73,6 +75,8 @@ export function DepartmentsTab({
         data={items}
         keyExtractor={item => String(item.id)}
         contentContainerStyle={styles.list}
+        ListHeaderComponent={listHeader}
+        ListHeaderComponentStyle={styles.listHeader}
         ListEmptyComponent={<EmptyState title="Chưa có phòng ban" />}
         renderItem={({item}) => (
           <Pressable style={styles.card} onPress={() => onOpen(item)}>
@@ -94,6 +98,10 @@ export function DepartmentsTab({
       <DepartmentEditor state={editor} organizationId={organizationId} onClose={() => setEditor({visible: false})} onSaved={async () => { await load(); onChanged?.(); }} />
     </View>
   );
+}
+
+function ListState({header, content}: {header?: React.ReactElement; content: React.ReactElement}) {
+  return <FlatList data={[]} renderItem={null} contentContainerStyle={styles.list} ListHeaderComponent={header} ListHeaderComponentStyle={styles.listHeader} ListEmptyComponent={content} />;
 }
 
 function DepartmentEditor({state, organizationId, onClose, onSaved}: {
@@ -140,6 +148,7 @@ function DepartmentEditor({state, organizationId, onClose, onSaved}: {
 const styles = StyleSheet.create({
   container: {flex: 1},
   list: {padding: 16, gap: 10, flexGrow: 1},
+  listHeader: {marginHorizontal: -16, marginTop: -16},
   card: {backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 8, padding: 14, gap: 10},
   cardMain: {flexDirection: 'row', alignItems: 'center', gap: 12},
   cardBody: {flex: 1, gap: 5},

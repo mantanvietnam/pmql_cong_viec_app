@@ -61,14 +61,33 @@ export function TaskDetailScreen({navigation, route}: Props) {
     });
   };
 
-  if (loading && !task) return <LoadingView label="Đang tải công việc..." />;
-  if (error && !task) return <ErrorState message={error} onRetry={load} />;
-  if (!task) return <EmptyState title="Không tìm thấy công việc" />;
+  if (loading && !task) {
+    return (
+      <TaskDetailState>
+        <LoadingView label="Đang tải công việc..." />
+      </TaskDetailState>
+    );
+  }
+  if (error && !task) {
+    return (
+      <TaskDetailState>
+        <ErrorState message={error} onRetry={load} />
+      </TaskDetailState>
+    );
+  }
+  if (!task) {
+    return (
+      <TaskDetailState>
+        <EmptyState title="Không tìm thấy công việc" />
+      </TaskDetailState>
+    );
+  }
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.hero}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.content}>
+          <View style={styles.hero}>
           <View style={styles.heroTop}>
             <StatusBadge status={task.status} />
             <AppButton
@@ -83,45 +102,54 @@ export function TaskDetailScreen({navigation, route}: Props) {
             <Text style={styles.meta}>Bắt đầu: {formatDateTime(task.start_date)}</Text>
             <Text style={styles.meta}>Hạn chót: {formatDateTime(task.end_date)}</Text>
           </View>
-        </View>
+          </View>
 
-        <Section title="File đính kèm">
-          {files.length === 0 ? (
-            <Text style={styles.muted}>Chưa có file đính kèm.</Text>
-          ) : (
-            files.map((file, index) => <AttachmentRow key={`${file.file_url}-${index}`} file={file} />)
-          )}
-        </Section>
+          <Section title="File đính kèm">
+            {files.length === 0 ? (
+              <Text style={styles.muted}>Chưa có file đính kèm.</Text>
+            ) : (
+              files.map((file, index) => <AttachmentRow key={`${file.file_url}-${index}`} file={file} />)
+            )}
+          </Section>
 
-        <Section title="Nhật ký / báo cáo tiến độ">
-          {logs.length === 0 ? (
-            <Text style={styles.muted}>Chưa có báo cáo tiến độ.</Text>
-          ) : (
-            <FlatList
-              data={logs}
-              keyExtractor={item => String(item.id)}
-              scrollEnabled={false}
-              renderItem={({item}) => (
-                <View style={styles.logCard}>
-                  <View style={styles.logTop}>
-                    <StatusBadge status={item.status} />
+          <Section title="Nhật ký / báo cáo tiến độ">
+            {logs.length === 0 ? (
+              <Text style={styles.muted}>Chưa có báo cáo tiến độ.</Text>
+            ) : (
+              <FlatList
+                data={logs}
+                keyExtractor={item => String(item.id)}
+                scrollEnabled={false}
+                renderItem={({item}) => (
+                  <View style={styles.logCard}>
+                    <View style={styles.logTop}>
+                      <StatusBadge status={item.status} />
+                    </View>
+                    <Text style={styles.logText}>{stripHtml(item.action)}</Text>
+                    <Text style={styles.meta}>{item.created_at ? new Date(item.created_at).toLocaleString('vi-VN') : ''}</Text>
+                    {[...parseAttachments(item.link_file), ...parseAttachments(item.image)].map((file, index) => <AttachmentRow key={`${file.file_url}-${index}`} file={file} />)}
+                    {Number(item.user_id) === Number(session?.id || session?.user_id) ? (
+                      <CardActions
+                        editLabel="Sửa báo cáo"
+                        onEdit={() => navigation.navigate('TaskReport', {taskId, currentStatus: task.status, log: item})}
+                        onDelete={() => deleteLog(item.id)}
+                      />
+                    ) : null}
                   </View>
-                  <Text style={styles.logText}>{stripHtml(item.action)}</Text>
-                  <Text style={styles.meta}>{item.created_at ? new Date(item.created_at).toLocaleString('vi-VN') : ''}</Text>
-                  {[...parseAttachments(item.link_file), ...parseAttachments(item.image)].map((file, index) => <AttachmentRow key={`${file.file_url}-${index}`} file={file} />)}
-                  {Number(item.user_id) === Number(session?.id || session?.user_id) ? (
-                    <CardActions
-                      editLabel="Sửa báo cáo"
-                      onEdit={() => navigation.navigate('TaskReport', {taskId, currentStatus: task.status, log: item})}
-                      onDelete={() => deleteLog(item.id)}
-                    />
-                  ) : null}
-                </View>
-              )}
-            />
-          )}
-        </Section>
+                )}
+              />
+            )}
+          </Section>
+        </View>
       </ScrollView>
+    </View>
+  );
+}
+
+function TaskDetailState({children}: {children: React.ReactNode}) {
+  return (
+    <View style={styles.screen}>
+      <View style={styles.stateBody}>{children}</View>
     </View>
   );
 }
@@ -148,7 +176,10 @@ function AttachmentRow({file}: {file: AttachedFile}) {
 
 const styles = StyleSheet.create({
   screen: {flex: 1, backgroundColor: colors.background},
+  scroll: {flex: 1},
+  scrollContent: {flexGrow: 1, backgroundColor: colors.background},
   content: {padding: 16, gap: 16},
+  stateBody: {flex: 1},
   hero: {backgroundColor: colors.surface, borderRadius: 16, padding: 18, gap: 14, borderWidth: 1, borderColor: colors.border},
   heroTop: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'},
   reportButton: {minHeight: 40, paddingHorizontal: 12},

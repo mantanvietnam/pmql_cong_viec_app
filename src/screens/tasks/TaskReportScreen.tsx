@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Alert, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {errorCodes, isErrorWithCode, pick} from '@react-native-documents/picker';
@@ -9,6 +9,7 @@ import {AppButton} from '../../components/AppButton';
 import {AppTextInput} from '../../components/AppTextInput';
 import {DateField} from '../../components/DateField';
 import {confirm} from '../../components/Confirm';
+import {ErrorState, LoadingView} from '../../components/StateView';
 import {TASK_STATUSES} from '../../constants/business';
 import {useAuth} from '../../context/AuthContext';
 import {AppStackParamList} from '../../navigation/types';
@@ -23,10 +24,38 @@ export function TaskReportScreen({navigation, route}: Props) {
   const {session} = useAuth();
   const editingLog = route.params.log;
   const [content, setContent] = useState(editingLog?.action || '');
-  const [status, setStatus] = useState(editingLog?.status || route.params.currentStatus || 1);
+  const shouldLoadTask = editingLog?.status == null && route.params.currentStatus == null;
+  const [status, setStatus] = useState(editingLog?.status ?? route.params.currentStatus ?? 1);
+  const [loadingTask, setLoadingTask] = useState(shouldLoadTask);
+  const [taskError, setTaskError] = useState('');
+  const [taskRequest, setTaskRequest] = useState(0);
   const [time, setTime] = useState(editingLog?.created_at ? new Date(editingLog.created_at) : new Date());
   const [files, setFiles] = useState<AttachedFile[]>([...parseAttachments(editingLog?.link_file), ...parseAttachments(editingLog?.image)]);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!shouldLoadTask) return;
+
+    let active = true;
+    setLoadingTask(true);
+    setTaskError('');
+    workApi.getTask(route.params.taskId)
+      .then(task => {
+        if (!active) return;
+        if (!task) throw new Error('Không tìm thấy công việc.');
+        setStatus(task.status);
+        setLoadingTask(false);
+      })
+      .catch(error => {
+        if (!active) return;
+        setTaskError((error as Error).message);
+        setLoadingTask(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [route.params.taskId, shouldLoadTask, taskRequest]);
 
   const submit = async () => {
     if (!content.trim()) return Alert.alert('Thiếu nội dung', 'Vui lòng nhập nội dung báo cáo.');
@@ -89,38 +118,69 @@ export function TaskReportScreen({navigation, route}: Props) {
     confirm('Gỡ file đã lưu', 'File này sẽ bị xóa khỏi báo cáo sau khi cập nhật. Tiếp tục?', remove);
   };
 
+  if (loadingTask) {
+    return (
+      <TaskReportState>
+        <LoadingView label="Đang tải công việc..." />
+      </TaskReportState>
+    );
+  }
+  if (taskError) {
+    return (
+      <TaskReportState>
+        <ErrorState message={taskError} onRetry={() => setTaskRequest(value => value + 1)} />
+      </TaskReportState>
+    );
+  }
+
   return (
-    <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-      <AppTextInput
-        label="Nội dung báo cáo"
-        value={content}
-        onChangeText={setContent}
-        multiline
-        textAlignVertical="top"
-        style={styles.textarea}
-      />
-      <Text style={styles.label}>Trạng thái mới</Text>
-      <View style={styles.statusGrid}>
-        {TASK_STATUSES.map(item => (
-          <AppButton
-            key={item.value}
-            title={item.label}
-            variant={status === item.value ? 'primary' : 'secondary'}
-            onPress={() => setStatus(item.value)}
-            style={styles.statusButton}
+    <View style={styles.screen}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        <View style={styles.content}>
+          <AppTextInput
+            label="Nội dung báo cáo"
+            value={content}
+            onChangeText={setContent}
+            multiline
+            textAlignVertical="top"
+            style={styles.textarea}
           />
-        ))}
-      </View>
-      <DateField label="Thời gian báo cáo" value={time} onChange={value => value && setTime(value)} includeTime />
-      <Text style={styles.label}>File đính kèm</Text><View style={styles.fileActions}><AppButton title="Tài liệu" variant="secondary" onPress={addDocuments} style={styles.fileButton} /><AppButton title="Ảnh" variant="secondary" onPress={addImages} style={styles.fileButton} /></View>
-      {files.map((file, index) => <View key={`${file.file_url}-${index}`} style={styles.fileRow}><Text numberOfLines={1} style={styles.fileName}>{file.file_name || file.file_url}</Text><Pressable onPress={() => removeFile(index)}><X size={18} color={colors.danger} /></Pressable></View>)}
-      <AppButton title={editingLog ? 'Cập nhật báo cáo' : 'Gửi báo cáo tiến độ'} onPress={submit} loading={saving} />
-    </ScrollView>
+          <Text style={styles.label}>Trạng thái mới</Text>
+          <View style={styles.statusGrid}>
+            {TASK_STATUSES.map(item => (
+              <AppButton
+                key={item.value}
+                title={item.label}
+                variant={status === item.value ? 'primary' : 'secondary'}
+                onPress={() => setStatus(item.value)}
+                style={styles.statusButton}
+              />
+            ))}
+          </View>
+          <DateField label="Thời gian báo cáo" value={time} onChange={value => value && setTime(value)} includeTime />
+          <Text style={styles.label}>File đính kèm</Text><View style={styles.fileActions}><AppButton title="Tài liệu" variant="secondary" onPress={addDocuments} style={styles.fileButton} /><AppButton title="Ảnh" variant="secondary" onPress={addImages} style={styles.fileButton} /></View>
+          {files.map((file, index) => <View key={`${file.file_url}-${index}`} style={styles.fileRow}><Text numberOfLines={1} style={styles.fileName}>{file.file_name || file.file_url}</Text><Pressable onPress={() => removeFile(index)}><X size={18} color={colors.danger} /></Pressable></View>)}
+          <AppButton title={editingLog ? 'Cập nhật báo cáo' : 'Gửi báo cáo tiến độ'} onPress={submit} loading={saving} />
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+function TaskReportState({children}: {children: React.ReactNode}) {
+  return (
+    <View style={styles.screen}>
+      <View style={styles.stateBody}>{children}</View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {padding: 16, gap: 16, backgroundColor: colors.background, flexGrow: 1},
+  screen: {flex: 1, backgroundColor: colors.background},
+  scroll: {flex: 1},
+  scrollContent: {backgroundColor: colors.background, flexGrow: 1},
+  content: {padding: 16, gap: 16, flexGrow: 1},
+  stateBody: {flex: 1},
   textarea: {height: 160, paddingTop: 12},
   label: {fontSize: 13, fontWeight: '800', color: colors.text},
   statusGrid: {flexDirection: 'row', flexWrap: 'wrap', gap: 8},

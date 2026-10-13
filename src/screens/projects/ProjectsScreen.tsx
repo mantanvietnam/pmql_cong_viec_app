@@ -62,16 +62,20 @@ export function ProjectsScreen() {
     });
   };
 
-  if (loading && items.length === 0) return <LoadingView label="Đang tải dự án..." />;
-  if (error && items.length === 0) return <ErrorState message={error} onRetry={load} />;
+  if (loading && items.length === 0) return <View style={styles.screen}>
+    <AppHeader title="Dự án" subtitle="Theo dõi trạng thái và hạn chót" right={permissions.includes('project_add') ? <AddIconButton onPress={() => setModal({open: true})} /> : undefined} />
+    <LoadingView label="Đang tải dự án..." />
+    <ProjectEditorModal visible={modal.open} project={modal.item} onClose={() => setModal({open: false})} onSaved={load} />
+  </View>;
+  if (error && items.length === 0) return <View style={styles.screen}>
+    <AppHeader title="Dự án" subtitle="Theo dõi trạng thái và hạn chót" right={permissions.includes('project_add') ? <AddIconButton onPress={() => setModal({open: true})} /> : undefined} />
+    <ErrorState message={error} onRetry={load} />
+    <ProjectEditorModal visible={modal.open} project={modal.item} onClose={() => setModal({open: false})} onSaved={load} />
+  </View>;
 
   return (
     <View style={styles.screen}>
       <AppHeader title="Dự án" subtitle="Theo dõi trạng thái và hạn chót" right={permissions.includes('project_add') ? <AddIconButton onPress={() => setModal({open: true})} /> : undefined} />
-      <View style={styles.filters}>
-        <View style={styles.searchRow}><Search size={20} color={colors.muted} /><AppTextInput value={search} onChangeText={setSearch} placeholder="Tìm tên dự án" style={styles.searchInput} /></View>
-        <FlatList horizontal data={[{value: undefined, label: 'Tất cả'}, ...PROJECT_STATUSES]} keyExtractor={item => String(item.value ?? 'all')} showsHorizontalScrollIndicator={false} renderItem={({item}) => <Pressable style={[styles.chip, status === item.value && styles.chipActive]} onPress={() => setStatus(item.value)}><Text style={[styles.chipText, status === item.value && styles.chipTextActive]}>{item.label}</Text></Pressable>} />
-      </View>
       <FlatList
         contentContainerStyle={styles.list}
         data={filtered}
@@ -81,6 +85,12 @@ export function ProjectsScreen() {
           setRefreshing(true);
           load();
         }}
+        ListHeaderComponent={<View style={styles.listHeader}>
+          <View style={styles.filters}>
+            <View style={styles.searchRow}><Search size={20} color={colors.muted} /><AppTextInput value={search} onChangeText={setSearch} placeholder="Tìm tên dự án" style={styles.searchInput} /></View>
+            <FlatList horizontal data={[{value: undefined, label: 'Tất cả'}, ...PROJECT_STATUSES]} keyExtractor={item => String(item.value ?? 'all')} showsHorizontalScrollIndicator={false} renderItem={({item}) => <Pressable style={[styles.chip, status === item.value && styles.chipActive]} onPress={() => setStatus(item.value)}><Text style={[styles.chipText, status === item.value && styles.chipTextActive]}>{item.label}</Text></Pressable>} />
+          </View>
+        </View>}
         ListEmptyComponent={<EmptyState title="Chưa có dự án" />}
         renderItem={({item}) => (
           <Pressable style={styles.card} onPress={() => navigation.navigate('ProjectDetail', {projectId: item.id})}>
@@ -103,6 +113,7 @@ export function ProjectsScreen() {
 
 const styles = StyleSheet.create({
   screen: {flex: 1, backgroundColor: colors.background},
+  listHeader: {marginHorizontal: -16, marginTop: -16},
   filters: {padding: 16, paddingBottom: 4, gap: 10},
   searchRow: {flexDirection: 'row', alignItems: 'center', gap: 8},
   searchInput: {flex: 1},
@@ -110,7 +121,7 @@ const styles = StyleSheet.create({
   chipActive: {backgroundColor: colors.primary, borderColor: colors.primary},
   chipText: {fontSize: 13, color: colors.muted, fontWeight: '800'},
   chipTextActive: {color: '#fff'},
-  list: {padding: 16, gap: 12},
+  list: {padding: 16, gap: 12, flexGrow: 1},
   card: {backgroundColor: colors.surface, borderRadius: 14, padding: 16, gap: 10, borderWidth: 1, borderColor: colors.border},
   title: {fontSize: 16, fontWeight: '900', color: colors.text},
   desc: {fontSize: 13, color: colors.muted},

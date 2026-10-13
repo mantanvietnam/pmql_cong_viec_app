@@ -93,8 +93,14 @@ export function TasksScreen() {
     });
   };
 
-  if (loading && tasks.length === 0) return <LoadingView label="Đang tải danh sách công việc..." />;
-  if (error && tasks.length === 0) return <ErrorState message={error} onRetry={() => load(1, false)} />;
+  if (loading && tasks.length === 0) return <View style={styles.screen}>
+    <AppHeader title="Công việc" subtitle="Sắp xếp và theo dõi tiến độ" right={<AddIconButton onPress={() => navigation.navigate('TaskForm')} />} />
+    <LoadingView label="Đang tải danh sách công việc..." />
+  </View>;
+  if (error && tasks.length === 0) return <View style={styles.screen}>
+    <AppHeader title="Công việc" subtitle="Sắp xếp và theo dõi tiến độ" right={<AddIconButton onPress={() => navigation.navigate('TaskForm')} />} />
+    <ErrorState message={error} onRetry={() => load(1, false)} />
+  </View>;
 
   return (
     <View style={styles.screen}>
@@ -103,58 +109,6 @@ export function TasksScreen() {
         subtitle="Sắp xếp và theo dõi tiến độ"
         right={<AddIconButton onPress={() => navigation.navigate('TaskForm')} />}
       />
-      <View style={styles.filters}>
-        <View style={styles.searchRow}>
-          <Search color={colors.muted} size={20} />
-          <AppTextInput
-            value={search}
-            onChangeText={setSearch}
-            placeholder="Tìm kiếm công việc..."
-            returnKeyType="search"
-            onSubmitEditing={() => load(1, false)}
-            style={styles.searchInput}
-          />
-        </View>
-        <FlatList
-          horizontal
-          data={[{value: undefined, label: 'Tất cả'}, ...TASK_STATUSES]}
-          keyExtractor={item => String(item.value ?? 'all')}
-          showsHorizontalScrollIndicator={false}
-          renderItem={({item}) => (
-            <Pressable
-              style={[styles.chip, status === item.value && styles.chipActive]}
-              onPress={() => setStatus(item.value)}>
-              <Text style={[styles.chipText, status === item.value && styles.chipTextActive]}>{item.label}</Text>
-            </Pressable>
-          )}
-        />
-        <FlatList
-          horizontal
-          data={TASK_TYPE_FILTERS}
-          keyExtractor={item => item.value || 'all'}
-          showsHorizontalScrollIndicator={false}
-          renderItem={({item}) => (
-            <Pressable
-              style={[styles.chip, taskType === item.value && styles.chipActive]}
-              onPress={() => setTaskType(item.value)}>
-              <Text style={[styles.chipText, taskType === item.value && styles.chipTextActive]}>{item.label}</Text>
-            </Pressable>
-          )}
-        />
-        <FlatList
-          horizontal
-          data={[{id: 0, name: 'Tất cả dự án'}, ...projects]}
-          keyExtractor={item => String(item.id)}
-          showsHorizontalScrollIndicator={false}
-          renderItem={({item}) => (
-            <Pressable
-              style={[styles.chip, (projectId || 0) === item.id && styles.chipActive]}
-              onPress={() => setProjectId(item.id || undefined)}>
-              <Text style={[styles.chipText, (projectId || 0) === item.id && styles.chipTextActive]}>{item.name}</Text>
-            </Pressable>
-          )}
-        />
-      </View>
       <FlatList
         contentContainerStyle={styles.list}
         data={tasks}
@@ -165,6 +119,62 @@ export function TasksScreen() {
         onEndReached={() => {
           if (hasMore && !loadingMore) load(page + 1, true);
         }}
+        ListHeaderComponent={(
+          <View style={styles.listHeader}>
+            <View style={styles.filters}>
+              <View style={styles.searchRow}>
+                <Search color={colors.muted} size={20} />
+                <AppTextInput
+                  value={search}
+                  onChangeText={setSearch}
+                  placeholder="Tìm kiếm công việc..."
+                  returnKeyType="search"
+                  onSubmitEditing={() => load(1, false)}
+                  style={styles.searchInput}
+                />
+              </View>
+              <FlatList
+                horizontal
+                data={[{value: undefined, label: 'Tất cả'}, ...TASK_STATUSES]}
+                keyExtractor={item => String(item.value ?? 'all')}
+                showsHorizontalScrollIndicator={false}
+                renderItem={({item}) => (
+                  <Pressable
+                    style={[styles.chip, status === item.value && styles.chipActive]}
+                    onPress={() => setStatus(item.value)}>
+                    <Text style={[styles.chipText, status === item.value && styles.chipTextActive]}>{item.label}</Text>
+                  </Pressable>
+                )}
+              />
+              <FlatList
+                horizontal
+                data={TASK_TYPE_FILTERS}
+                keyExtractor={item => item.value || 'all'}
+                showsHorizontalScrollIndicator={false}
+                renderItem={({item}) => (
+                  <Pressable
+                    style={[styles.chip, taskType === item.value && styles.chipActive]}
+                    onPress={() => setTaskType(item.value)}>
+                    <Text style={[styles.chipText, taskType === item.value && styles.chipTextActive]}>{item.label}</Text>
+                  </Pressable>
+                )}
+              />
+              <FlatList
+                horizontal
+                data={[{id: 0, name: 'Tất cả dự án'}, ...projects]}
+                keyExtractor={item => String(item.id)}
+                showsHorizontalScrollIndicator={false}
+                renderItem={({item}) => (
+                  <Pressable
+                    style={[styles.chip, (projectId || 0) === item.id && styles.chipActive]}
+                    onPress={() => setProjectId(item.id || undefined)}>
+                    <Text style={[styles.chipText, (projectId || 0) === item.id && styles.chipTextActive]}>{item.name}</Text>
+                  </Pressable>
+                )}
+              />
+            </View>
+          </View>
+        )}
         ListEmptyComponent={<EmptyState title="Không có công việc" message="Thử đổi bộ lọc hoặc tạo công việc mới." />}
         renderItem={({item}) => (
           <TaskCard
@@ -209,6 +219,7 @@ function TaskCard({
 
 const styles = StyleSheet.create({
   screen: {flex: 1, backgroundColor: colors.background},
+  listHeader: {marginHorizontal: -16, marginTop: -16},
   filters: {padding: 16, gap: 12},
   searchRow: {flexDirection: 'row', alignItems: 'center', gap: 8},
   searchInput: {flex: 1},
@@ -224,7 +235,7 @@ const styles = StyleSheet.create({
   chipActive: {backgroundColor: colors.primary, borderColor: colors.primary},
   chipText: {fontWeight: '700', color: colors.muted},
   chipTextActive: {color: '#fff'},
-  list: {padding: 16, paddingTop: 0, gap: 12},
+  list: {padding: 16, gap: 12, flexGrow: 1},
   card: {
     backgroundColor: colors.surface,
     borderRadius: 14,

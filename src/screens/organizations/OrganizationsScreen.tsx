@@ -52,15 +52,20 @@ export function OrganizationsScreen() {
     });
   };
 
-  if (loading && items.length === 0) return <LoadingView label="Đang tải tổ chức..." />;
-  if (error && items.length === 0) return <ErrorState message={error} onRetry={load} />;
+  if (loading && items.length === 0) return <View style={styles.screen}>
+    <AppHeader title="Tổ chức" subtitle="Phòng ban, dự án và nhân sự" right={<AddIconButton onPress={() => setModal({open: true})} />} />
+    <LoadingView label="Đang tải tổ chức..." />
+    <OrganizationModal state={modal} onClose={() => setModal({open: false})} onSaved={load} />
+  </View>;
+  if (error && items.length === 0) return <View style={styles.screen}>
+    <AppHeader title="Tổ chức" subtitle="Phòng ban, dự án và nhân sự" right={<AddIconButton onPress={() => setModal({open: true})} />} />
+    <ErrorState message={error} onRetry={load} />
+    <OrganizationModal state={modal} onClose={() => setModal({open: false})} onSaved={load} />
+  </View>;
 
   return (
     <View style={styles.screen}>
       <AppHeader title="Tổ chức" subtitle="Phòng ban, dự án và nhân sự" right={<AddIconButton onPress={() => setModal({open: true})} />} />
-      <View style={styles.filters}>
-        <AppTextInput value={search} onChangeText={setSearch} onSubmitEditing={load} placeholder="Tìm kiếm tổ chức..." />
-      </View>
       <FlatList
         contentContainerStyle={styles.list}
         data={items}
@@ -70,6 +75,11 @@ export function OrganizationsScreen() {
           setRefreshing(true);
           load();
         }}
+        ListHeaderComponent={<View style={styles.listHeader}>
+          <View style={styles.filters}>
+            <AppTextInput value={search} onChangeText={setSearch} onSubmitEditing={load} placeholder="Tìm kiếm tổ chức..." />
+          </View>
+        </View>}
         ListEmptyComponent={<EmptyState title="Chưa có tổ chức" />}
         renderItem={({item}) => (
           <Pressable style={styles.card} onPress={() => navigation.navigate('OrganizationDetail', {organizationId: item.id})}>
@@ -131,8 +141,9 @@ function OrganizationModal({state, onClose, onSaved}: {state: {open: boolean; it
 
 const styles = StyleSheet.create({
   screen: {flex: 1, backgroundColor: colors.background},
+  listHeader: {marginHorizontal: -16, marginTop: -16},
   filters: {padding: 16},
-  list: {padding: 16, paddingTop: 0, gap: 12},
+  list: {padding: 16, gap: 12, flexGrow: 1},
   card: {backgroundColor: colors.surface, borderRadius: 14, padding: 14, gap: 10, borderWidth: 1, borderColor: colors.border},
   cardMain: {flexDirection: 'row', alignItems: 'flex-start', gap: 12},
   avatar: {width: 44, height: 44, borderRadius: 14, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center'},

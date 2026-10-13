@@ -14,12 +14,13 @@ import {MemberScope, Membership, Role, User} from '../../../types/models';
 import {getScopeLabel} from '../../../utils/scope';
 import {AppStackParamList} from '../../../navigation/types';
 
-export function MembersTab({scope, permissions, onChanged, onOpenTasks, onRegisterAddAction}: {
+export function MembersTab({scope, permissions, onChanged, onOpenTasks, onRegisterAddAction, listHeader}: {
   scope: MemberScope;
   permissions: string[];
   onChanged?: () => void;
   onOpenTasks: (member: Membership) => void;
   onRegisterAddAction?: (action?: () => void) => void;
+  listHeader?: React.ReactElement;
 }) {
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const scopeType = scope.type;
@@ -64,11 +65,11 @@ export function MembersTab({scope, permissions, onChanged, onOpenTasks, onRegist
     try { await workApi.deleteMember(stableScope, member.join_id); await load(); onChanged?.(); } catch (err) { Alert.alert('Không thể xóa', (err as Error).message); }
   });
 
-  if (loading && items.length === 0) return <LoadingView label="Đang tải nhân sự..." />;
-  if (error && items.length === 0) return <ErrorState message={error} onRetry={load} />;
+  if (loading && items.length === 0) return <ListState header={listHeader} content={<LoadingView label="Đang tải nhân sự..." />} />;
+  if (error && items.length === 0) return <ListState header={listHeader} content={<ErrorState message={error} onRetry={load} />} />;
   return (
     <View style={styles.container}>
-      <FlatList data={items} keyExtractor={item => String(item.join_id)} contentContainerStyle={styles.list} ListEmptyComponent={<EmptyState title="Chưa có nhân sự" />} renderItem={({item}) => {
+      <FlatList data={items} keyExtractor={item => String(item.join_id)} contentContainerStyle={styles.list} ListHeaderComponent={listHeader} ListHeaderComponentStyle={styles.listHeader} ListEmptyComponent={<EmptyState title="Chưa có nhân sự" />} renderItem={({item}) => {
         const role = roles.find(value => value.id === item.role_id);
         return (
           <View style={styles.card}>
@@ -100,6 +101,10 @@ export function MembersTab({scope, permissions, onChanged, onOpenTasks, onRegist
       <EditRoleModal member={editing} organizationId={organizationId || 0} roles={roles} onClose={() => setEditing(undefined)} onSaved={load} />
     </View>
   );
+}
+
+function ListState({header, content}: {header?: React.ReactElement; content: React.ReactElement}) {
+  return <FlatList data={[]} renderItem={null} contentContainerStyle={styles.list} ListHeaderComponent={header} ListHeaderComponentStyle={styles.listHeader} ListEmptyComponent={content} />;
 }
 
 function AddMembersModal({visible, scope, roles, existingIds, onClose, onSaved}: {
@@ -163,6 +168,6 @@ function EditRoleModal({member, organizationId, roles, onClose, onSaved}: {membe
 }
 
 const styles = StyleSheet.create({
-  container: {flex: 1}, search: {flex: 1}, list: {padding: 16, gap: 10, flexGrow: 1}, card: {padding: 13, borderRadius: 8, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, gap: 10}, cardMain: {flexDirection: 'row', alignItems: 'center', gap: 11}, avatar: {width: 42, height: 42, borderRadius: 21, backgroundColor: '#e8f0fe', alignItems: 'center', justifyContent: 'center'}, avatarText: {fontWeight: '900', color: colors.primary}, body: {flex: 1, gap: 3}, name: {fontSize: 15, fontWeight: '900', color: colors.text}, meta: {fontSize: 12, color: colors.muted}, role: {fontSize: 12, color: colors.muted, fontWeight: '700'}, taskMetric: {minHeight: 44, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 12}, taskMetricText: {fontSize: 13, color: colors.primary, fontWeight: '900'},
+  container: {flex: 1}, search: {flex: 1}, list: {padding: 16, gap: 10, flexGrow: 1}, listHeader: {marginHorizontal: -16, marginTop: -16}, card: {padding: 13, borderRadius: 8, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, gap: 10}, cardMain: {flexDirection: 'row', alignItems: 'center', gap: 11}, avatar: {width: 42, height: 42, borderRadius: 21, backgroundColor: '#e8f0fe', alignItems: 'center', justifyContent: 'center'}, avatarText: {fontWeight: '900', color: colors.primary}, body: {flex: 1, gap: 3}, name: {fontSize: 15, fontWeight: '900', color: colors.text}, meta: {fontSize: 12, color: colors.muted}, role: {fontSize: 12, color: colors.muted, fontWeight: '700'}, taskMetric: {minHeight: 44, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 12}, taskMetricText: {fontSize: 13, color: colors.primary, fontWeight: '900'},
   backdrop: {flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.4)'}, centerBackdrop: {flex: 1, justifyContent: 'center', padding: 20, backgroundColor: 'rgba(0,0,0,0.4)'}, sheet: {maxHeight: '90%', padding: 18, gap: 13, backgroundColor: colors.background, borderTopLeftRadius: 16, borderTopRightRadius: 16}, dialog: {padding: 18, gap: 12, backgroundColor: colors.surface, borderRadius: 8}, sheetTitle: {fontSize: 20, color: colors.text, fontWeight: '900'}, searchRow: {flexDirection: 'row', gap: 8, alignItems: 'flex-end'}, searchButton: {minHeight: 48}, pickerList: {gap: 8, minHeight: 100, maxHeight: 320}, choice: {padding: 12, borderWidth: 1, borderColor: colors.border, borderRadius: 8, backgroundColor: colors.surface}, choiceActive: {backgroundColor: colors.primary, borderColor: colors.primary}, choiceText: {fontSize: 14, fontWeight: '800', color: colors.text}, choiceTextActive: {color: '#fff'}, choiceMeta: {fontSize: 12, color: colors.muted, marginTop: 3}, label: {fontSize: 13, color: colors.text, fontWeight: '800'}, roleList: {gap: 8}, roleChoice: {paddingHorizontal: 13, minHeight: 40, justifyContent: 'center', borderWidth: 1, borderColor: colors.border, borderRadius: 8, backgroundColor: colors.surface},
 });
